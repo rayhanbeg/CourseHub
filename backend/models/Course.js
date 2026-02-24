@@ -44,6 +44,15 @@ const CourseSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    introVideoUrl: {
+      type: String,
+      default: '',
+    },
+    introVideoPublicId: {
+      type: String,
+      default: '',
+    },
     rating: {
       type: Number,
       default: 0,

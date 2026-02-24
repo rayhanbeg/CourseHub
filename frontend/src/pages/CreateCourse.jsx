@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { courseAPI } from '../services/api';
-import { ArrowLeft, Loader } from 'lucide-react';
+import { ArrowLeft, Loader, Upload, CheckCircle2 } from 'lucide-react';
 
 const CreateCourse = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
@@ -20,6 +20,8 @@ const CreateCourse = () => {
     thumbnail: '',
     language: 'English',
     duration: '',
+    introVideoUrl: '',
+    introVideoPublicId: '',
   });
 
   const categories = [
@@ -38,10 +40,50 @@ const CreateCourse = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingThumbnail(true);
+    setError(null);
+
+    try {
+      const { data } = await courseAPI.uploadThumbnail(file);
+      setFormData((prev) => ({ ...prev, thumbnail: data.thumbnail.url }));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Thumbnail upload failed');
+    } finally {
+      setUploadingThumbnail(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleIntroVideoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingVideo(true);
+    setError(null);
+
+    try {
+      const { data } = await courseAPI.uploadIntroVideo(file);
+      setFormData((prev) => ({
+        ...prev,
+        introVideoUrl: data.video.url,
+        introVideoPublicId: data.video.publicId,
+      }));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Video upload failed');
+    } finally {
+      setUploadingVideo(false);
+      e.target.value = '';
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -50,36 +92,24 @@ const CreateCourse = () => {
     setError(null);
 
     try {
-      // Validate required fields
-      if (!formData.title.trim()) {
-        throw new Error('Course title is required');
-      }
-      if (!formData.description.trim()) {
-        throw new Error('Course description is required');
-      }
-      if (!formData.price || formData.price <= 0) {
-        throw new Error('Valid course price is required');
-      }
+      if (!formData.title.trim()) throw new Error('Course title is required');
+      if (!formData.description.trim()) throw new Error('Course description is required');
+      if (!formData.price || formData.price <= 0) throw new Error('Valid course price is required');
 
-      // Prepare course data
       const courseData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
         level: formData.level,
         price: parseFloat(formData.price),
-        thumbnail: formData.thumbnail || 'https://via.placeholder.com/400x300?text=Course+Thumbnail',
+        thumbnail: formData.thumbnail?.trim(),
         language: formData.language,
-        duration: formData.duration ? parseInt(formData.duration) : 0,
-        instructor: user._id,
+        duration: formData.duration ? parseInt(formData.duration, 10) : 0,
+        introVideoUrl: formData.introVideoUrl,
+        introVideoPublicId: formData.introVideoPublicId,
       };
 
-      console.log(' Creating course with data:', courseData);
-
-      // Call API to create course
-      const response = await courseAPI.createCourse(courseData);
-
-      console.log(' Course created successfully:', response.data);
+      await courseAPI.createCourse(courseData);
 
       setSuccess(true);
       setFormData({
@@ -91,15 +121,18 @@ const CreateCourse = () => {
         thumbnail: '',
         language: 'English',
         duration: '',
+        introVideoUrl: '',
+        introVideoPublicId: '',
       });
 
-      // Redirect to admin dashboard after 2 seconds
-      setTimeout(() => {
-        navigate('/admin/dashboard');
-      }, 2000);
+      setTimeout(() => navigate('/admin/dashboard'), 1500);
     } catch (err) {
-      console.error(' Error creating course:', err);
-      setError(err.message || 'Failed to create course. Please try again.');
+      setError(
+        err.response?.data?.message
+          || err.response?.data?.errors?.[0]?.message
+          || err.message
+          || 'Failed to create course. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -107,7 +140,6 @@ const CreateCourse = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-6">
         <div className="max-w-4xl mx-auto px-4">
           <button
@@ -118,17 +150,14 @@ const CreateCourse = () => {
             Back to Dashboard
           </button>
           <h1 className="text-3xl font-bold">Create New Course</h1>
-          <p className="text-blue-100 mt-2">Add a new course to your teaching portfolio</p>
+          <p className="text-blue-100 mt-2">Upload intro video and thumbnail directly to Cloudinary</p>
         </div>
       </div>
 
-      {/* Form Container */}
       <div className="max-w-4xl mx-auto px-4 py-12">
         {success && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
-              ✓
-            </div>
+            <CheckCircle2 className="w-6 h-6 text-green-600 mt-0.5" />
             <div>
               <p className="text-green-800 font-semibold">Course Created Successfully!</p>
               <p className="text-green-700 text-sm">Redirecting to dashboard...</p>
@@ -137,191 +166,105 @@ const CreateCourse = () => {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
-              ✕
-            </div>
-            <div>
-              <p className="text-red-800 font-semibold">Error Creating Course</p>
-              <p className="text-red-700 text-sm">{error}</p>
-            </div>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800 font-semibold">Error Creating Course</p>
+            <p className="text-red-700 text-sm">{error}</p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8">
-          {/* Course Title */}
           <div className="mb-6">
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              Course Title <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Course Title *</label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
               placeholder="e.g., Web Development Masterclass"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
               required
             />
           </div>
 
-          {/* Course Description */}
           <div className="mb-6">
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              Course Description <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Course Description *</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Describe what students will learn in this course..."
               rows="5"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+              placeholder="Describe what students will learn in this course..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               disabled={loading}
               required
             />
           </div>
 
-          {/* Category and Level */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Category <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                disabled={loading}
-              >
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
+              <label className="block text-sm font-bold text-gray-700 mb-2">Category *</label>
+              <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={loading}>
+                {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
-
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Level <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="level"
-                value={formData.level}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                disabled={loading}
-              >
-                {levels.map(level => (
-                  <option key={level} value={level}>{level}</option>
-                ))}
+              <label className="block text-sm font-bold text-gray-700 mb-2">Level *</label>
+              <select name="level" value={formData.level} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={loading}>
+                {levels.map((level) => <option key={level} value={level}>{level}</option>)}
               </select>
             </div>
           </div>
 
-          {/* Price and Duration */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Price ($) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                placeholder="e.g., 49.99"
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                disabled={loading}
-                required
-              />
+              <label className="block text-sm font-bold text-gray-700 mb-2">Price ($) *</label>
+              <input type="number" name="price" value={formData.price} onChange={handleChange} min="0" step="0.01" className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={loading} required />
             </div>
-
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Duration (hours)
-              </label>
-              <input
-                type="number"
-                name="duration"
-                value={formData.duration}
-                onChange={handleChange}
-                placeholder="e.g., 20"
-                min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                disabled={loading}
-              />
+              <label className="block text-sm font-bold text-gray-700 mb-2">Duration (hours)</label>
+              <input type="number" name="duration" value={formData.duration} onChange={handleChange} min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={loading} />
             </div>
           </div>
 
-          {/* Language and Thumbnail */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Language
+          <div className="mb-6">
+            <label className="block text-sm font-bold text-gray-700 mb-2">Language</label>
+            <select name="language" value={formData.language} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={loading}>
+              {languages.map((lang) => <option key={lang} value={lang}>{lang}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="rounded-xl border border-gray-200 p-4 bg-gray-50">
+              <p className="text-sm font-bold text-gray-700 mb-3">Thumbnail (Cloudinary Upload)</p>
+              <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-secondary transition">
+                {uploadingThumbnail ? <Loader className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Upload Image
+                <input type="file" accept="image/*" className="hidden" onChange={handleThumbnailUpload} disabled={uploadingThumbnail || loading} />
               </label>
-              <select
-                name="language"
-                value={formData.language}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                disabled={loading}
-              >
-                {languages.map(lang => (
-                  <option key={lang} value={lang}>{lang}</option>
-                ))}
-              </select>
+              {formData.thumbnail && <p className="text-xs text-green-700 mt-3 break-all">Uploaded: {formData.thumbnail}</p>}
+              {formData.thumbnail && (
+                <img src={formData.thumbnail} alt="Thumbnail" className="mt-3 w-full h-36 object-cover rounded-lg" />
+              )}
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Thumbnail URL
+            <div className="rounded-xl border border-gray-200 p-4 bg-gray-50">
+              <p className="text-sm font-bold text-gray-700 mb-3">Intro Video (Direct Upload)</p>
+              <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-secondary transition">
+                {uploadingVideo ? <Loader className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Upload Video
+                <input type="file" accept="video/*" className="hidden" onChange={handleIntroVideoUpload} disabled={uploadingVideo || loading} />
               </label>
-              <input
-                type="url"
-                name="thumbnail"
-                value={formData.thumbnail}
-                onChange={handleChange}
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                disabled={loading}
-              />
+              {formData.introVideoUrl && <p className="text-xs text-green-700 mt-3 break-all">Uploaded video ready.</p>}
+              {formData.introVideoUrl && (
+                <video src={formData.introVideoUrl} controls className="mt-3 w-full h-36 rounded-lg bg-black" />
+              )}
             </div>
           </div>
 
-          {/* Thumbnail Preview */}
-          {formData.thumbnail && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-semibold text-gray-700 mb-3">Thumbnail Preview:</p>
-              <img
-                src={formData.thumbnail || "/placeholder.svg"}
-                alt="Course thumbnail"
-                className="w-full h-48 object-cover rounded-lg"
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/400x300?text=Invalid+URL';
-                }}
-              />
-            </div>
-          )}
-
-          {/* Buttons */}
           <div className="flex gap-4 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => navigate('/admin/dashboard')}
-              disabled={loading}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button type="button" onClick={() => navigate('/admin/dashboard')} disabled={loading} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50">
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-900 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
+            <button type="submit" disabled={loading || uploadingThumbnail || uploadingVideo} className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-900 flex items-center justify-center gap-2 disabled:opacity-60">
               {loading && <Loader className="w-5 h-5 animate-spin" />}
               {loading ? 'Creating Course...' : 'Create Course'}
             </button>

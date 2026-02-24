@@ -72,6 +72,20 @@ export const courseAPI = {
   updateCourse: (id, data) => api.put(`/courses/${id}`, data),
   deleteCourse: (id) => api.delete(`/courses/${id}`),
   getInstructorCourses: () => api.get('/courses/instructor/my-courses'),
+  uploadThumbnail: (file) => {
+    const formData = new FormData();
+    formData.append('thumbnail', file);
+    return api.post('/courses/upload/thumbnail', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  uploadIntroVideo: (file) => {
+    const formData = new FormData();
+    formData.append('video', file);
+    return api.post('/courses/upload/intro-video', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 // Module API

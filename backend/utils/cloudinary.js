@@ -6,51 +6,45 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Upload video to Cloudinary
-const uploadVideo = async (filePath) => {
-  try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      resource_type: 'video',
-      folder: 'course-videos',
-      quality: 'auto',
+const uploadFromBuffer = (buffer, options) =>
+  new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
     });
 
-    return {
-      url: result.secure_url,
-      publicId: result.public_id,
-      duration: result.duration,
-    };
-  } catch (error) {
-    throw new Error(`Video upload failed: ${error.message}`);
-  }
+    uploadStream.end(buffer);
+  });
+
+const uploadVideoBuffer = async (buffer, folder = 'course-videos') => {
+  const result = await uploadFromBuffer(buffer, {
+    resource_type: 'video',
+    folder,
+    quality: 'auto',
+  });
+
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+    duration: result.duration,
+  };
 };
 
-// Delete video from Cloudinary
+const uploadImageBuffer = async (buffer, folder = 'course-thumbnails') => {
+  const result = await uploadFromBuffer(buffer, {
+    resource_type: 'image',
+    folder,
+    transformation: [{ width: 1200, height: 675, crop: 'fill' }],
+  });
+
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
+};
+
 const deleteVideo = async (publicId) => {
-  try {
-    await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
-  } catch (error) {
-    throw new Error(`Video deletion failed: ${error.message}`);
-  }
+  await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
 };
 
-// Upload image thumbnail
-const uploadThumbnail = async (filePath) => {
-  try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      folder: 'course-thumbnails',
-      transformation: [
-        { width: 400, height: 300, crop: 'fill' },
-      ],
-    });
-
-    return {
-      url: result.secure_url,
-      publicId: result.public_id,
-    };
-  } catch (error) {
-    throw new Error(`Thumbnail upload failed: ${error.message}`);
-  }
-};
-
-export { uploadVideo, deleteVideo, uploadThumbnail };
+export { uploadVideoBuffer, uploadImageBuffer, deleteVideo };

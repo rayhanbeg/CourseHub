@@ -23,6 +23,8 @@ const validationSchemas = {
     level: Joi.string().valid('Beginner', 'Intermediate', 'Advanced').required(),
     language: Joi.string().optional().allow(''),
     duration: Joi.number().optional().min(0),
+    introVideoUrl: Joi.string().uri().optional().allow(''),
+    introVideoPublicId: Joi.string().optional().allow(''),
     instructor: Joi.string().optional(),
   }),
 
