@@ -22,6 +22,7 @@ const CreateCourse = () => {
     duration: '',
     introVideoUrl: '',
     introVideoPublicId: '',
+    isPublished: false,
   });
 
   const categories = [
@@ -107,6 +108,7 @@ const CreateCourse = () => {
         duration: formData.duration ? parseInt(formData.duration, 10) : 0,
         introVideoUrl: formData.introVideoUrl,
         introVideoPublicId: formData.introVideoPublicId,
+        isPublished: formData.isPublished,
       };
 
       await courseAPI.createCourse(courseData);
@@ -123,6 +125,7 @@ const CreateCourse = () => {
         duration: '',
         introVideoUrl: '',
         introVideoPublicId: '',
+        isPublished: false,
       });
 
       setTimeout(() => navigate('/admin/dashboard'), 1500);
@@ -225,6 +228,19 @@ const CreateCourse = () => {
               <label className="block text-sm font-bold text-gray-700 mb-2">Duration (hours)</label>
               <input type="number" name="duration" value={formData.duration} onChange={handleChange} min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg" disabled={loading} />
             </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="inline-flex items-center gap-3 text-sm font-semibold text-gray-700">
+              <input
+                type="checkbox"
+                checked={formData.isPublished}
+                onChange={(e) => setFormData((prev) => ({ ...prev, isPublished: e.target.checked }))}
+                className="w-4 h-4"
+              />
+              Publish this course immediately
+            </label>
+            <p className="text-xs text-gray-500 mt-1">If unchecked, course will stay in Draft and won't appear on Home/Courses pages.</p>
           </div>
 
           <div className="mb-6">

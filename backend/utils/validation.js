@@ -25,6 +25,7 @@ const validationSchemas = {
     duration: Joi.number().optional().min(0),
     introVideoUrl: Joi.string().uri().optional().allow(''),
     introVideoPublicId: Joi.string().optional().allow(''),
+    isPublished: Joi.boolean().optional(),
     instructor: Joi.string().optional(),
   }),
 
@@ -33,8 +34,8 @@ const validationSchemas = {
     description: Joi.string(),
     thumbnail: Joi.string(),
     price: Joi.number().min(0),
-    category: Joi.string().valid('programming', 'design', 'business', 'marketing', 'other'),
-    level: Joi.string().valid('beginner', 'intermediate', 'advanced'),
+    category: Joi.string().valid('Programming', 'Web Development', 'Mobile Development', 'Data Science', 'Design', 'Business', 'Marketing', 'Other'),
+    level: Joi.string().valid('Beginner', 'Intermediate', 'Advanced'),
     isPublished: Joi.boolean(),
   }),
 

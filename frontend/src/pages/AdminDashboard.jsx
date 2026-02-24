@@ -77,6 +77,18 @@ const AdminDashboard = () => {
     [orders]
   );
 
+
+  const togglePublishStatus = async (courseId, nextStatus) => {
+    try {
+      const { data } = await courseAPI.updateCourse(courseId, { isPublished: nextStatus });
+      setCourses((prev) => prev.map((course) => (
+        course._id === courseId ? { ...course, isPublished: data.course.isPublished } : course
+      )));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update publish status');
+    }
+  };
+
   if (auth.user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-light flex items-center justify-center">
@@ -176,6 +188,7 @@ const AdminDashboard = () => {
                     <th className="text-left py-4 px-4 font-semibold text-dark">Modules</th>
                     <th className="text-left py-4 px-4 font-semibold text-dark">Price</th>
                     <th className="text-left py-4 px-4 font-semibold text-dark">Status</th>
+                    <th className="text-left py-4 px-4 font-semibold text-dark">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -189,6 +202,15 @@ const AdminDashboard = () => {
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${course.isPublished ? 'bg-green-100 text-accent' : 'bg-yellow-100 text-orange-600'}`}>
                           {course.isPublished ? 'Published' : 'Draft'}
                         </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        <button
+                          type="button"
+                          onClick={() => togglePublishStatus(course._id, !course.isPublished)}
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${course.isPublished ? 'border-orange-300 text-orange-700 hover:bg-orange-50' : 'border-green-300 text-green-700 hover:bg-green-50'}`}
+                        >
+                          {course.isPublished ? 'Move to Draft' : 'Publish'}
+                        </button>
                       </td>
                     </tr>
                   ))}

@@ -19,7 +19,7 @@ const CoursesList = () => {
         const params = {
           category: selectedCategory || undefined,
           level: selectedLevel || undefined,
-          search: searchTerm || undefined,
+          query: searchTerm || undefined,
         };
         const { data } = await courseAPI.searchCourses(params);
         dispatch(setCoursesSuccess(data));
@@ -31,8 +31,8 @@ const CoursesList = () => {
     fetchCourses();
   }, [selectedCategory, selectedLevel, searchTerm, dispatch]);
 
-  const categories = ['programming', 'design', 'business', 'marketing', 'other'];
-  const levels = ['beginner', 'intermediate', 'advanced'];
+  const categories = ['Programming', 'Web Development', 'Mobile Development', 'Data Science', 'Design', 'Business', 'Marketing', 'Other'];
+  const levels = ['Beginner', 'Intermediate', 'Advanced'];
 
   return (
     <div className="min-h-screen bg-light">
