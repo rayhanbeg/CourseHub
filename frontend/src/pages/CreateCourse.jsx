@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { courseAPI } from '../services/api';
 import { ArrowLeft, Loader } from 'lucide-react';
 
 const CreateCourse = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -68,10 +66,9 @@ const CreateCourse = () => {
         category: formData.category,
         level: formData.level,
         price: parseFloat(formData.price),
-        thumbnail: formData.thumbnail || 'https://via.placeholder.com/400x300?text=Course+Thumbnail',
+        thumbnail: formData.thumbnail?.trim(),
         language: formData.language,
-        duration: formData.duration ? parseInt(formData.duration) : 0,
-        instructor: user._id,
+        duration: formData.duration ? parseInt(formData.duration, 10) : 0,
       };
 
       console.log(' Creating course with data:', courseData);
@@ -99,7 +96,7 @@ const CreateCourse = () => {
       }, 2000);
     } catch (err) {
       console.error(' Error creating course:', err);
-      setError(err.message || 'Failed to create course. Please try again.');
+      setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.message || err.message || 'Failed to create course. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -297,11 +294,11 @@ const CreateCourse = () => {
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
               <p className="text-sm font-semibold text-gray-700 mb-3">Thumbnail Preview:</p>
               <img
-                src={formData.thumbnail || "/placeholder.svg"}
+                src={formData.thumbnail || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80"}
                 alt="Course thumbnail"
                 className="w-full h-48 object-cover rounded-lg"
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/400x300?text=Invalid+URL';
+                  e.target.src = 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&q=80';
                 }}
               />
             </div>

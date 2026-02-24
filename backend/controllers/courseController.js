@@ -70,6 +70,7 @@ export const createCourse = async (req, res, next) => {
 
     const course = new Course({
       ...value,
+      thumbnail: value.thumbnail?.trim() || 'https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=1200&q=80',
       instructor: req.user._id,
     });
 
