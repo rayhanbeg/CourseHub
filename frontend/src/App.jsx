@@ -9,6 +9,7 @@ import { ProtectedRoute } from './components';
 import StudentDashboard from './pages/StudentDashboard';
 import CoursesList from './pages/CoursesList';
 import CoursePlayer from './pages/CoursePlayer';
+import CourseDetails from './pages/CourseDetails';
 import Checkout from './pages/Checkout';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import AdminDashboard from './pages/AdminDashboard';
@@ -30,6 +31,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/courses" element={<CoursesList />} />
+            <Route path="/courses/:courseId" element={<CourseDetails />} />
 
             {/* Protected Student Routes */}
             <Route

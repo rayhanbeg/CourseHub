@@ -175,7 +175,7 @@ const CoursesList = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-bold text-primary">${course.price}</span>
                         <Link
-                          to={`/course/${course._id}`}
+                          to={`/courses/${course._id}`}
                           className="px-4 py-2 bg-primary text-white rounded hover:bg-secondary transition font-semibold"
                         >
                           View Course

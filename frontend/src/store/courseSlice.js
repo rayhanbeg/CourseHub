@@ -26,6 +26,7 @@ const courseSlice = createSlice({
       state.totalCourses = action.payload.total;
       state.currentPage = action.payload.page;
       state.error = null;
+      state.isLoading = false;
     },
     setCourseDetails: (state, action) => {
       state.selectedCourse = action.payload;
