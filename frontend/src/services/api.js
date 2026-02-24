@@ -121,6 +121,7 @@ export const orderAPI = {
   createOrder: (data) => api.post('/orders', data),
   getUserOrders: () => api.get('/orders/my-orders'),
   getOrderById: (id) => api.get(`/orders/${id}`),
+  confirmOrderPayment: (id) => api.post(`/orders/${id}/confirm`),
   createStripeSession: (data) => api.post('/orders/stripe/create-session', data),
   getAllOrders: (params) => api.get('/orders', { params }),
 };

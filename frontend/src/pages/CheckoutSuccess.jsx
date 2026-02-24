@@ -13,6 +13,7 @@ const CheckoutSuccess = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
+        await orderAPI.confirmOrderPayment(orderId);
         const { data } = await orderAPI.getOrderById(orderId);
         setOrder(data.order);
       } catch (error) {

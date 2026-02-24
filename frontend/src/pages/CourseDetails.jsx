@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock3, Globe2, Loader, PlayCircle, Star } from 'lucide-react';
-import { courseAPI } from '../services/api';
+import { courseAPI, orderAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const CourseDetails = () => {
@@ -11,6 +11,7 @@ const CourseDetails = () => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [enrolled, setEnrolled] = useState(false);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -19,15 +20,44 @@ const CourseDetails = () => {
         setCourse(data.course);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load course details');
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchCourse();
-  }, [courseId]);
+    const fetchEnrollment = async () => {
+      if (!auth.isAuthenticated || auth.user?.role !== 'student') return;
+      try {
+        const { data } = await orderAPI.getUserOrders();
+        const hasEnrollment = (data.orders || []).some(
+          (order) => order.course?._id === courseId && order.status === 'completed'
+        );
+        setEnrolled(hasEnrollment);
+      } catch (_) {
+        setEnrolled(false);
+      }
+    };
+
+    const run = async () => {
+      setLoading(true);
+      await Promise.all([fetchCourse(), fetchEnrollment()]);
+      setLoading(false);
+    };
+
+    run();
+  }, [courseId, auth.isAuthenticated, auth.user?.role]);
+
+  const enrollButtonLabel = useMemo(() => {
+    if (enrolled) return 'Continue Course';
+    if (!auth.isAuthenticated) return 'Login to Enroll';
+    if (auth.user?.role !== 'student') return 'Student account required';
+    return 'Enroll Now';
+  }, [auth.isAuthenticated, auth.user?.role, enrolled]);
 
   const handleEnroll = () => {
+    if (enrolled) {
+      navigate(`/course/${courseId}`);
+      return;
+    }
+
     if (!auth.isAuthenticated) {
       navigate('/login');
       return;
@@ -81,7 +111,7 @@ const CourseDetails = () => {
             </div>
 
             <h1 className="text-3xl font-bold text-dark mb-3">{course.title}</h1>
-            <p className="text-gray-600 leading-relaxed mb-6">{course.description}</p>
+            <p className="text-gray-600 leading-relaxed mb-6 whitespace-pre-line">{course.description}</p>
 
             <div className="grid md:grid-cols-3 gap-4 mb-8">
               <div className="rounded-lg border p-4 flex items-center gap-3">
@@ -114,7 +144,6 @@ const CourseDetails = () => {
               </div>
             )}
 
-
             {Array.isArray(course.modules) && course.modules.length > 0 && (
               <div className="mb-8">
                 <h2 className="text-xl font-bold text-dark mb-3">Course Curriculum</h2>
@@ -135,10 +164,14 @@ const CourseDetails = () => {
                 </div>
               </div>
             )}
+
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <p className="text-3xl font-bold text-primary">${course.price}</p>
-              <button onClick={handleEnroll} className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-secondary transition">
-                {auth.isAuthenticated ? 'Enroll Now' : 'Login to Enroll'}
+              <button
+                onClick={handleEnroll}
+                className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-secondary transition"
+              >
+                {enrollButtonLabel}
               </button>
             </div>
           </div>

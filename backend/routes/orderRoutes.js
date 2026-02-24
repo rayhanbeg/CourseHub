@@ -9,6 +9,7 @@ router.post('/', authMiddleware, orderController.createOrder);
 router.get('/my-orders', authMiddleware, orderController.getUserOrders);
 router.get('/:id', authMiddleware, orderController.getOrderById);
 router.post('/stripe/create-session', authMiddleware, orderController.createStripeSession);
+router.post('/:id/confirm', authMiddleware, orderController.confirmOrderPayment);
 
 // Webhook (public)
 router.post('/webhook/stripe', express.raw({ type: 'application/json' }), orderController.handleStripeWebhook);
