@@ -107,6 +107,13 @@ export const lessonAPI = {
   deleteLesson: (id) => api.delete(`/lessons/${id}`),
   addResources: (id, data) => api.post(`/lessons/${id}/resources`, data),
   removeResource: (id, data) => api.delete(`/lessons/${id}/resource`, { data }),
+  uploadLessonVideo: (file) => {
+    const formData = new FormData();
+    formData.append('video', file);
+    return api.post('/lessons/upload/video', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 // Order API

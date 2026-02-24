@@ -114,6 +114,27 @@ const CourseDetails = () => {
               </div>
             )}
 
+
+            {Array.isArray(course.modules) && course.modules.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-dark mb-3">Course Curriculum</h2>
+                <div className="space-y-3">
+                  {course.modules.map((section, idx) => (
+                    <div key={section._id || idx} className="border rounded-lg p-4">
+                      <p className="font-semibold mb-2">Section {idx + 1}: {section.title}</p>
+                      <ul className="space-y-2 text-sm text-gray-700">
+                        {(section.lessons || []).map((lesson, lidx) => (
+                          <li key={lesson._id || lidx} className="flex items-center justify-between">
+                            <span>{lidx + 1}. {lesson.title}</span>
+                            {lesson.isPreview ? <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">Preview</span> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <p className="text-3xl font-bold text-primary">${course.price}</p>
               <button onClick={handleEnroll} className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-secondary transition">

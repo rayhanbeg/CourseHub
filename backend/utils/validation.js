@@ -53,6 +53,8 @@ const validationSchemas = {
     description: Joi.string(),
     videoUrl: Joi.string().required(),
     videoDuration: Joi.number(),
+    isPreview: Joi.boolean().optional(),
+    resources: Joi.array().items(Joi.object({ title: Joi.string().allow(''), url: Joi.string().allow('') })).optional(),
     moduleId: Joi.string().required(),
     sequenceNumber: Joi.number().required(),
   }),
