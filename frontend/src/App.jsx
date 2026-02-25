@@ -14,6 +14,7 @@ import Checkout from './pages/Checkout';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import AdminDashboard from './pages/AdminDashboard';
 import CreateCourse from './pages/CreateCourse';
+import EditCourse from './pages/EditCourse';
 
 // Auth Pages
 import Home from './pages/Home';
@@ -66,6 +67,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/edit-course/:courseId"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <EditCourse />
                 </ProtectedRoute>
               }
             />

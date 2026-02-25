@@ -32,7 +32,11 @@ const validationSchemas = {
   updateCourse: Joi.object({
     title: Joi.string().max(100),
     description: Joi.string(),
-    thumbnail: Joi.string(),
+    thumbnail: Joi.string().allow(''),
+    introVideoUrl: Joi.string().uri().allow(''),
+    introVideoPublicId: Joi.string().allow(''),
+    language: Joi.string().allow(''),
+    duration: Joi.number().min(0),
     price: Joi.number().min(0),
     category: Joi.string().valid('Programming', 'Web Development', 'Mobile Development', 'Data Science', 'Design', 'Business', 'Marketing', 'Other'),
     level: Joi.string().valid('Beginner', 'Intermediate', 'Advanced'),

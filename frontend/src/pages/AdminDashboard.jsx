@@ -78,6 +78,16 @@ const AdminDashboard = () => {
   );
 
 
+  const handleDeleteCourse = async (courseId) => {
+    try {
+      await courseAPI.deleteCourse(courseId);
+      setCourses((prev) => prev.filter((course) => course._id !== courseId));
+      setStats((prev) => ({ ...prev, totalCourses: Math.max(0, prev.totalCourses - 1) }));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete course');
+    }
+  };
+
   const togglePublishStatus = async (courseId, nextStatus) => {
     try {
       const { data } = await courseAPI.updateCourse(courseId, { isPublished: nextStatus });
@@ -204,13 +214,28 @@ const AdminDashboard = () => {
                         </span>
                       </td>
                       <td className="py-4 px-4">
-                        <button
-                          type="button"
-                          onClick={() => togglePublishStatus(course._id, !course.isPublished)}
-                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${course.isPublished ? 'border-orange-300 text-orange-700 hover:bg-orange-50' : 'border-green-300 text-green-700 hover:bg-green-50'}`}
-                        >
-                          {course.isPublished ? 'Move to Draft' : 'Publish'}
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => togglePublishStatus(course._id, !course.isPublished)}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${course.isPublished ? 'border-orange-300 text-orange-700 hover:bg-orange-50' : 'border-green-300 text-green-700 hover:bg-green-50'}`}
+                          >
+                            {course.isPublished ? 'Move to Draft' : 'Publish'}
+                          </button>
+                          <Link
+                            to={`/admin/edit-course/${course._id}`}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCourse(course._id)}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-300 text-red-700 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
