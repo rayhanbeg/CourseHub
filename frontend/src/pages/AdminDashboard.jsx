@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { courseAPI, orderAPI } from '../services/api';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Loader, Users, BookOpen, DollarSign, TrendingUp, PlusCircle } from 'lucide-react';
+import AppNavbar from '../components/AppNavbar';
 
 const formatMonth = (dateString) =>
   new Date(dateString).toLocaleDateString('en-US', { month: 'short' });
@@ -119,6 +120,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <AppNavbar />
       <div className="bg-gradient-to-r from-primary to-secondary text-white py-8">
         <div className="max-w-7xl mx-auto px-4 flex items-end justify-between gap-4 flex-wrap">
           <div>

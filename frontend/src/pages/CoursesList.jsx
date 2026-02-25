@@ -4,6 +4,7 @@ import { courseAPI } from '../services/api';
 import { setCoursesSuccess, setLoading, setError, setFilters, clearFilters } from '../store/courseSlice';
 import { Loader, Search, Filter, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AppNavbar from '../components/AppNavbar';
 
 const CoursesList = () => {
   const dispatch = useDispatch();
@@ -36,6 +37,7 @@ const CoursesList = () => {
 
   return (
     <div className="min-h-screen bg-light">
+      <AppNavbar />
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-secondary text-white py-8">
         <div className="max-w-7xl mx-auto px-4">

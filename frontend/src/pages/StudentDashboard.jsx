@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { progressAPI } from '../services/api';
 import { Loader, BookOpen, BarChart3, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AppNavbar from '../components/AppNavbar';
 
 const StudentDashboard = () => {
   const auth = useAuth();
@@ -43,6 +44,7 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-light">
+      <AppNavbar />
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-secondary text-white py-8">
         <div className="max-w-7xl mx-auto px-4">

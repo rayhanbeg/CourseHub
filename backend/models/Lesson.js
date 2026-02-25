@@ -18,7 +18,7 @@ const LessonSchema = new mongoose.Schema(
     },
     videoUrl: {
       type: String,
-      required: [true, 'Please provide a video URL'],
+      default: '',
     },
     videoDuration: {
       type: Number,

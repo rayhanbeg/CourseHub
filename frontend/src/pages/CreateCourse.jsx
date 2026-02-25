@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { courseAPI, lessonAPI, moduleAPI } from '../services/api';
 import { ArrowLeft, CheckCircle2, Loader, Plus, Trash2, Upload } from 'lucide-react';
+import AppNavbar from '../components/AppNavbar';
 
 const emptyLesson = () => ({
   title: '',
@@ -202,6 +203,7 @@ const CreateCourse = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <AppNavbar />
       <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-6">
         <div className="max-w-5xl mx-auto px-4">
           <button onClick={() => navigate('/admin/dashboard')} className="inline-flex items-center gap-2 text-blue-100 hover:text-white mb-3"><ArrowLeft className="w-5 h-5" /> Back</button>

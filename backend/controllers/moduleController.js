@@ -18,7 +18,7 @@ export const createModule = async (req, res, next) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    if (course.instructor.toString() !== req.user._id.toString()) {
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to add modules to this course' });
     }
 
@@ -76,7 +76,7 @@ export const updateModule = async (req, res, next) => {
     }
 
     // Check authorization
-    if (module.course.instructor.toString() !== req.user._id.toString()) {
+    if (module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to update this module' });
     }
 
@@ -108,7 +108,7 @@ export const deleteModule = async (req, res, next) => {
     }
 
     // Check authorization
-    if (module.course.instructor.toString() !== req.user._id.toString()) {
+    if (module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to delete this module' });
     }
 

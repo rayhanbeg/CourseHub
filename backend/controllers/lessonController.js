@@ -17,14 +17,14 @@ export const createLesson = async (req, res, next) => {
       return res.status(404).json({ message: 'Module not found' });
     }
 
-    if (module.course.instructor.toString() !== req.user._id.toString()) {
+    if (module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to add lessons to this module' });
     }
 
     const lesson = new Lesson({
       title: value.title,
       description: value.description,
-      videoUrl: value.videoUrl,
+      videoUrl: value.videoUrl || '',
       videoDuration: value.videoDuration,
       isPreview: value.isPreview || false,
       resources: value.resources || [],
@@ -72,7 +72,7 @@ export const updateLesson = async (req, res, next) => {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    if (lesson.module.course.instructor.toString() !== req.user._id.toString()) {
+    if (lesson.module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to update this lesson' });
     }
 
@@ -81,7 +81,7 @@ export const updateLesson = async (req, res, next) => {
     lesson.title = title || lesson.title;
     lesson.description = description ?? lesson.description;
     lesson.videoUrl = videoUrl || lesson.videoUrl;
-    lesson.videoDuration = videoDuration || lesson.videoDuration;
+    lesson.videoDuration = videoDuration !== undefined ? videoDuration : lesson.videoDuration;
     lesson.resources = resources || lesson.resources;
     lesson.sequenceNumber = sequenceNumber !== undefined ? sequenceNumber : lesson.sequenceNumber;
     lesson.isPreview = isPreview !== undefined ? isPreview : lesson.isPreview;
@@ -109,7 +109,7 @@ export const deleteLesson = async (req, res, next) => {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    if (lesson.module.course.instructor.toString() !== req.user._id.toString()) {
+    if (lesson.module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to delete this lesson' });
     }
 
@@ -145,7 +145,7 @@ export const addResources = async (req, res, next) => {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    if (lesson.module.course.instructor.toString() !== req.user._id.toString()) {
+    if (lesson.module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to modify this lesson' });
     }
 
@@ -173,7 +173,7 @@ export const removeResource = async (req, res, next) => {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    if (lesson.module.course.instructor.toString() !== req.user._id.toString()) {
+    if (lesson.module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to modify this lesson' });
     }
 

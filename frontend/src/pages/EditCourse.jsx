@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { courseAPI, lessonAPI, moduleAPI } from '../services/api';
+import AppNavbar from '../components/AppNavbar';
 
 const EditCourse = () => {
   const { courseId } = useParams();
@@ -114,7 +115,7 @@ const EditCourse = () => {
       const { data } = await lessonAPI.createLesson({
         title: `Lesson ${nextSeq}`,
         description: '',
-        videoUrl: course.introVideoUrl || 'https://example.com/lesson-video.mp4',
+        videoUrl: course.introVideoUrl || '',
         videoDuration: 0,
         isPreview: false,
         resources: [],
@@ -174,6 +175,7 @@ const EditCourse = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <AppNavbar />
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <Link to="/admin/dashboard" className="inline-flex items-center gap-2 text-primary font-semibold"><ArrowLeft className="w-5 h-5" /> Back to Dashboard</Link>
@@ -229,7 +231,13 @@ const EditCourse = () => {
                         <div className="grid lg:grid-cols-12 gap-2 items-start">
                           <input className="lg:col-span-3 border rounded px-2 py-2" value={lesson.title} onChange={(e) => updateLessonField(module._id, lesson._id, 'title', e.target.value)} placeholder="Lesson title" />
                           <input className="lg:col-span-3 border rounded px-2 py-2" value={lesson.description || ''} onChange={(e) => updateLessonField(module._id, lesson._id, 'description', e.target.value)} placeholder="Description" />
-                          <input className="lg:col-span-3 border rounded px-2 py-2" value={lesson.videoUrl || ''} onChange={(e) => updateLessonField(module._id, lesson._id, 'videoUrl', e.target.value)} placeholder="Video URL" />
+                          <div className="lg:col-span-3 border rounded px-2 py-2 bg-slate-50">
+                            {lesson.videoUrl ? (
+                              <video src={lesson.videoUrl} controls className="w-full h-24 rounded bg-black" />
+                            ) : (
+                              <p className="text-xs text-slate-500">No video uploaded yet</p>
+                            )}
+                          </div>
                           <div className="lg:col-span-1 flex items-center gap-1 text-xs">
                             <input type="checkbox" checked={!!lesson.isPreview} onChange={(e) => updateLessonField(module._id, lesson._id, 'isPreview', e.target.checked)} /> Preview
                           </div>

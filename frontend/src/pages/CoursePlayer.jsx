@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { courseAPI, progressAPI } from '../services/api';
 import { VideoPlayer } from '../components';
+import AppNavbar from '../components/AppNavbar';
 import { Loader, ChevronDown, CheckCircle, Play, Lock } from 'lucide-react';
 
 const CoursePlayer = () => {
@@ -118,6 +119,7 @@ const CoursePlayer = () => {
 
   return (
     <div className="min-h-screen bg-light">
+      <AppNavbar />
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-secondary text-white py-4 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4">

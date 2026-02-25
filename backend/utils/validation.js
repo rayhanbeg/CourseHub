@@ -55,7 +55,7 @@ const validationSchemas = {
   createLesson: Joi.object({
     title: Joi.string().required(),
     description: Joi.string(),
-    videoUrl: Joi.string().required(),
+    videoUrl: Joi.string().allow('').optional(),
     videoDuration: Joi.number(),
     isPreview: Joi.boolean().optional(),
     resources: Joi.array().items(Joi.object({ title: Joi.string().allow(''), url: Joi.string().allow('') })).optional(),

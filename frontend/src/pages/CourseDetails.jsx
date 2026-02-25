@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock3, Globe2, Loader, PlayCircle, Star } from 'lucide-react';
 import { courseAPI, orderAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import AppNavbar from '../components/AppNavbar';
 
 const CourseDetails = () => {
   const { courseId } = useParams();
@@ -73,8 +74,11 @@ const CourseDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-light">
+        <AppNavbar />
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <Loader className="w-8 h-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
@@ -82,6 +86,7 @@ const CourseDetails = () => {
   if (error || !course) {
     return (
       <div className="min-h-screen bg-light py-10">
+        <AppNavbar />
         <div className="max-w-5xl mx-auto px-4">
           <Link to="/courses" className="inline-flex items-center gap-2 text-primary hover:text-secondary mb-6 font-semibold">
             <ArrowLeft className="w-5 h-5" /> Back to Courses
@@ -96,6 +101,7 @@ const CourseDetails = () => {
 
   return (
     <div className="min-h-screen bg-light py-10">
+      <AppNavbar />
       <div className="max-w-5xl mx-auto px-4">
         <Link to="/courses" className="inline-flex items-center gap-2 text-primary hover:text-secondary mb-6 font-semibold">
           <ArrowLeft className="w-5 h-5" /> Back to Courses
