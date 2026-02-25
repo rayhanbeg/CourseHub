@@ -1,6 +1,7 @@
 import Course from '../models/Course.js';
 import Module from '../models/Module.js';
 import { validationSchemas, validate } from '../utils/validation.js';
+import { uploadImageBuffer, uploadVideoBuffer } from '../utils/cloudinary.js';
 
 // Get All Courses
 export const getAllCourses = async (req, res, next) => {
@@ -70,6 +71,7 @@ export const createCourse = async (req, res, next) => {
 
     const course = new Course({
       ...value,
+      thumbnail: value.thumbnail?.trim() || 'https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=1200&q=80',
       instructor: req.user._id,
     });
 
@@ -172,6 +174,43 @@ export const searchCourses = async (req, res, next) => {
     res.status(200).json({
       success: true,
       courses,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// Upload Course Thumbnail (Admin only)
+export const uploadCourseThumbnail = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Thumbnail image is required' });
+    }
+
+    const thumbnail = await uploadImageBuffer(req.file.buffer);
+
+    res.status(200).json({
+      success: true,
+      thumbnail,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Upload Course Intro Video (Admin only)
+export const uploadCourseIntroVideo = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Video file is required' });
+    }
+
+    const video = await uploadVideoBuffer(req.file.buffer, 'course-intro-videos');
+
+    res.status(200).json({
+      success: true,
+      video,
     });
   } catch (error) {
     next(error);

@@ -98,7 +98,7 @@ const Checkout = () => {
     <div className="min-h-screen bg-light py-8">
       <div className="max-w-2xl mx-auto px-4">
         <button
-          onClick={() => navigate(`/course/${courseId}`)}
+          onClick={() => navigate(`/courses/${courseId}`)}
           className="flex items-center gap-2 text-primary hover:text-secondary mb-6"
         >
           <ArrowLeft className="w-5 h-5" />

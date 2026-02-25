@@ -15,6 +15,7 @@ const CoursePlayer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedModules, setExpandedModules] = useState({});
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,7 +37,12 @@ const CoursePlayer = () => {
           }
         }
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load course');
+        if (err.response?.status === 404) {
+          setAccessDenied(true);
+          setError('You are not enrolled in this course yet.');
+        } else {
+          setError(err.response?.data?.message || 'Failed to load course');
+        }
       } finally {
         setLoading(false);
       }
@@ -80,6 +86,27 @@ const CoursePlayer = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <p className="text-gray-500 text-lg">Course not found</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-light py-8">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="bg-white rounded-lg shadow p-10 text-center">
+            <Lock className="w-10 h-10 text-primary mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-dark mb-2">Enrollment Required</h2>
+            <p className="text-gray-600 mb-6">You need to enroll in this course before accessing lessons.</p>
+            <button
+              onClick={() => navigate(`/courses/${courseId}`)}
+              className="px-5 py-2.5 rounded-lg bg-primary text-white hover:bg-secondary transition font-semibold"
+            >
+              Go to Course Details
+            </button>
           </div>
         </div>
       </div>

@@ -2,30 +2,97 @@ import Order from '../models/Order.js';
 import Course from '../models/Course.js';
 import User from '../models/User.js';
 import Progress from '../models/Progress.js';
+import Module from '../models/Module.js';
 import Stripe from 'stripe';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const buildProgressLessons = async (courseId) => {
+  const modules = await Module.find({ course: courseId }).select('lessons').populate('lessons', '_id');
+  const lessons = [];
+
+  modules.forEach((module) => {
+    (module.lessons || []).forEach((lesson) => {
+      lessons.push({
+        lesson: lesson._id,
+        isCompleted: false,
+        watchTime: 0,
+      });
+    });
+  });
+
+  return lessons;
+};
+
+const finalizeEnrollment = async (order) => {
+  if (!order || order.status === 'completed') return order;
+
+  order.status = 'completed';
+  order.enrollmentDate = order.enrollmentDate || new Date();
+  await order.save();
+
+  const user = await User.findById(order.student);
+  const alreadyEnrolled = user.enrolledCourses.some((c) => c.courseId.toString() === order.course.toString());
+
+  if (!alreadyEnrolled) {
+    user.enrolledCourses.push({
+      courseId: order.course,
+      enrolledAt: new Date(),
+    });
+    await user.save();
+    await Course.findByIdAndUpdate(order.course, { $inc: { enrollmentCount: 1 } });
+  }
+
+  let progress = await Progress.findOne({ student: order.student, course: order.course });
+  if (!progress) {
+    const lessonProgress = await buildProgressLessons(order.course);
+    progress = new Progress({
+      student: order.student,
+      course: order.course,
+      lessons: lessonProgress,
+      overallProgress: 0,
+      isCompleted: false,
+    });
+    await progress.save();
+  }
+
+  return order;
+};
 
 // Create Order (Initiate Payment)
 export const createOrder = async (req, res, next) => {
   try {
     const { courseId, paymentMethod } = req.body;
 
-    // Validate course exists
     const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Check if user already enrolled
     const user = await User.findById(req.user._id);
     const isEnrolled = user.enrolledCourses.some((c) => c.courseId.toString() === courseId);
-
     if (isEnrolled) {
       return res.status(400).json({ message: 'You are already enrolled in this course' });
     }
 
-    // Create order
+    const existingPending = await Order.findOne({
+      student: req.user._id,
+      course: courseId,
+      status: 'pending',
+      paymentMethod,
+    }).sort({ createdAt: -1 });
+
+    if (existingPending) {
+      return res.status(200).json({
+        success: true,
+        message: 'Existing pending order found',
+        order: existingPending,
+      });
+    }
+
     const order = new Order({
       student: req.user._id,
       course: courseId,
@@ -36,11 +103,7 @@ export const createOrder = async (req, res, next) => {
 
     await order.save();
 
-    res.status(201).json({
-      success: true,
-      message: 'Order created successfully',
-      order,
-    });
+    res.status(201).json({ success: true, message: 'Order created successfully', order });
   } catch (error) {
     next(error);
   }
@@ -53,13 +116,8 @@ export const createStripeSession = async (req, res, next) => {
 
     const order = await Order.findById(orderId).populate('course student');
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    if (order.paymentMethod !== 'stripe') {
-      return res.status(400).json({ message: 'Invalid payment method for this order' });
-    }
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.paymentMethod !== 'stripe') return res.status(400).json({ message: 'Invalid payment method for this order' });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -86,22 +144,52 @@ export const createStripeSession = async (req, res, next) => {
       },
     });
 
-    // Update order with stripe session ID
     order.stripeSessionId = session.id;
     await order.save();
 
-    res.status(200).json({
-      success: true,
-      sessionId: session.id,
-      url: session.url,
-    });
+    res.status(200).json({ success: true, sessionId: session.id, url: session.url });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Confirm payment and enroll (fallback when webhook is delayed)
+export const confirmOrderPayment = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    if (order.student.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to confirm this order' });
+    }
+
+    if (order.status === 'completed') {
+      return res.status(200).json({ success: true, message: 'Order already completed', order });
+    }
+
+    if (!order.stripeSessionId) {
+      return res.status(400).json({ message: 'Stripe session not found for this order' });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({ message: 'Payment is not completed yet' });
+    }
+
+    order.transactionId = session.payment_intent?.toString() || order.transactionId;
+    await finalizeEnrollment(order);
+
+    const populated = await Order.findById(order._id).populate('course', 'title thumbnail price');
+
+    res.status(200).json({ success: true, message: 'Enrollment confirmed successfully', order: populated });
   } catch (error) {
     next(error);
   }
 };
 
 // Handle Stripe Webhook
-export const handleStripeWebhook = async (req, res, next) => {
+export const handleStripeWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
   try {
@@ -109,52 +197,11 @@ export const handleStripeWebhook = async (req, res, next) => {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-
-      // Find and update order
       const order = await Order.findOne({ stripeSessionId: session.id });
 
       if (order) {
-        order.status = 'completed';
         order.transactionId = session.payment_intent;
-        order.enrollmentDate = new Date();
-        await order.save();
-
-        // Enroll user in course
-        const user = await User.findById(order.student);
-        if (!user.enrolledCourses.some((c) => c.courseId.toString() === order.course.toString())) {
-          user.enrolledCourses.push({
-            courseId: order.course,
-            enrolledAt: new Date(),
-          });
-          await user.save();
-        }
-
-        // Update course enrollment count
-        await Course.findByIdAndUpdate(order.course, { $inc: { enrollmentCount: 1 } });
-
-        // Create progress tracker
-        const course = await Course.findById(order.course).populate('modules');
-        const progress = new Progress({
-          student: order.student,
-          course: order.course,
-          lessons: [],
-        });
-
-        if (course.modules.length > 0) {
-          for (const module of course.modules) {
-            if (module.lessons) {
-              for (const lesson of module.lessons) {
-                progress.lessons.push({
-                  lesson,
-                  isCompleted: false,
-                  watchTime: 0,
-                });
-              }
-            }
-          }
-        }
-
-        await progress.save();
+        await finalizeEnrollment(order);
       }
     }
 
@@ -164,53 +211,41 @@ export const handleStripeWebhook = async (req, res, next) => {
   }
 };
 
-// Get User Orders
 export const getUserOrders = async (req, res, next) => {
   try {
     const orders = await Order.find({ student: req.user._id })
       .populate('course', 'title thumbnail price')
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      orders,
-    });
+    res.status(200).json({ success: true, orders });
   } catch (error) {
     next(error);
   }
 };
 
-// Get Order Details
 export const getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('student', 'name email')
       .populate('course', 'title description price');
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
+    if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    // Check authorization
     if (order.student._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to view this order' });
     }
 
-    res.status(200).json({
-      success: true,
-      order,
-    });
+    res.status(200).json({ success: true, order });
   } catch (error) {
     next(error);
   }
 };
 
-// Admin: Get All Orders
 export const getAllOrders = async (req, res, next) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
 
-    let filter = {};
+    const filter = {};
     if (status) filter.status = status;
 
     const skip = (page - 1) * limit;
@@ -219,7 +254,7 @@ export const getAllOrders = async (req, res, next) => {
       .populate('student', 'name email')
       .populate('course', 'title price')
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(parseInt(limit, 10))
       .sort({ createdAt: -1 });
 
     const total = await Order.countDocuments(filter);
@@ -227,7 +262,7 @@ export const getAllOrders = async (req, res, next) => {
     res.status(200).json({
       success: true,
       total,
-      page: parseInt(page),
+      page: parseInt(page, 10),
       pages: Math.ceil(total / limit),
       orders,
     });

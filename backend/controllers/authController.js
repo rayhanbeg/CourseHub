@@ -141,6 +141,7 @@ export const getCurrentUser = async (req, res, next) => {
         role: user.role,
         profileImage: user.profileImage,
         bio: user.bio,
+        enrolledCourses: user.enrolledCourses,
       },
     });
   } catch (error) {

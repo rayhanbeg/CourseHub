@@ -24,6 +24,10 @@ const LessonSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    isPreview: {
+      type: Boolean,
+      default: false,
+    },
     resources: [
       {
         title: String,

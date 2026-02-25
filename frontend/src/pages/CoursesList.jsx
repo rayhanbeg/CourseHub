@@ -19,7 +19,7 @@ const CoursesList = () => {
         const params = {
           category: selectedCategory || undefined,
           level: selectedLevel || undefined,
-          search: searchTerm || undefined,
+          query: searchTerm || undefined,
         };
         const { data } = await courseAPI.searchCourses(params);
         dispatch(setCoursesSuccess(data));
@@ -31,8 +31,8 @@ const CoursesList = () => {
     fetchCourses();
   }, [selectedCategory, selectedLevel, searchTerm, dispatch]);
 
-  const categories = ['programming', 'design', 'business', 'marketing', 'other'];
-  const levels = ['beginner', 'intermediate', 'advanced'];
+  const categories = ['Programming', 'Web Development', 'Mobile Development', 'Data Science', 'Design', 'Business', 'Marketing', 'Other'];
+  const levels = ['Beginner', 'Intermediate', 'Advanced'];
 
   return (
     <div className="min-h-screen bg-light">
@@ -150,17 +150,17 @@ const CoursesList = () => {
                 <p className="text-gray-500 text-lg">No courses found</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {courses.map((course) => (
-                  <div key={course._id} className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden">
+                  <div key={course._id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition overflow-hidden group">
                     {course.thumbnail && (
                       <img
                         src={course.thumbnail || "/placeholder.svg"}
                         alt={course.title}
-                        className="w-full h-48 object-cover"
+                        className="w-full h-48 object-cover group-hover:scale-105 transition duration-500"
                       />
                     )}
-                    <div className="p-6">
+                    <div className="p-5">
                       <h3 className="font-bold text-lg mb-2 text-dark line-clamp-2">{course.title}</h3>
                       <p className="text-gray-600 text-sm mb-4 line-clamp-2">{course.description}</p>
                       <div className="flex items-center justify-between mb-4">
@@ -175,8 +175,8 @@ const CoursesList = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-bold text-primary">${course.price}</span>
                         <Link
-                          to={`/course/${course._id}`}
-                          className="px-4 py-2 bg-primary text-white rounded hover:bg-secondary transition font-semibold"
+                          to={`/courses/${course._id}`}
+                          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition font-semibold text-sm"
                         >
                           View Course
                         </Link>

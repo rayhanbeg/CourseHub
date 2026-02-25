@@ -1,6 +1,7 @@
 import Lesson from '../models/Lesson.js';
 import Module from '../models/Module.js';
 import { validationSchemas, validate } from '../utils/validation.js';
+import { uploadVideoBuffer } from '../utils/cloudinary.js';
 
 // Create Lesson
 export const createLesson = async (req, res, next) => {
@@ -11,28 +12,28 @@ export const createLesson = async (req, res, next) => {
       return res.status(400).json({ errors });
     }
 
-    // Verify module exists and user is instructor
     const module = await Module.findById(value.moduleId).populate('course');
     if (!module) {
       return res.status(404).json({ message: 'Module not found' });
     }
 
-    if (module.course.instructor.toString() !== req.user._id.toString()) {
+    if (module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to add lessons to this module' });
     }
 
     const lesson = new Lesson({
       title: value.title,
       description: value.description,
-      videoUrl: value.videoUrl,
+      videoUrl: value.videoUrl || '',
       videoDuration: value.videoDuration,
+      isPreview: value.isPreview || false,
+      resources: value.resources || [],
       module: value.moduleId,
       sequenceNumber: value.sequenceNumber,
     });
 
     await lesson.save();
 
-    // Add lesson to module
     module.lessons.push(lesson._id);
     await module.save();
 
@@ -46,7 +47,6 @@ export const createLesson = async (req, res, next) => {
   }
 };
 
-// Get Lesson
 export const getLesson = async (req, res, next) => {
   try {
     const lesson = await Lesson.findById(req.params.id).populate('module');
@@ -55,42 +55,36 @@ export const getLesson = async (req, res, next) => {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    res.status(200).json({
-      success: true,
-      lesson,
-    });
+    res.status(200).json({ success: true, lesson });
   } catch (error) {
     next(error);
   }
 };
 
-// Update Lesson
 export const updateLesson = async (req, res, next) => {
   try {
     const lesson = await Lesson.findById(req.params.id).populate({
       path: 'module',
-      populate: {
-        path: 'course',
-      },
+      populate: { path: 'course' },
     });
 
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    // Check authorization
-    if (lesson.module.course.instructor.toString() !== req.user._id.toString()) {
+    if (lesson.module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to update this lesson' });
     }
 
-    const { title, description, videoUrl, videoDuration, resources, sequenceNumber } = req.body;
+    const { title, description, videoUrl, videoDuration, resources, sequenceNumber, isPreview } = req.body;
 
     lesson.title = title || lesson.title;
-    lesson.description = description || lesson.description;
+    lesson.description = description ?? lesson.description;
     lesson.videoUrl = videoUrl || lesson.videoUrl;
-    lesson.videoDuration = videoDuration || lesson.videoDuration;
+    lesson.videoDuration = videoDuration !== undefined ? videoDuration : lesson.videoDuration;
     lesson.resources = resources || lesson.resources;
     lesson.sequenceNumber = sequenceNumber !== undefined ? sequenceNumber : lesson.sequenceNumber;
+    lesson.isPreview = isPreview !== undefined ? isPreview : lesson.isPreview;
 
     await lesson.save();
 
@@ -104,115 +98,82 @@ export const updateLesson = async (req, res, next) => {
   }
 };
 
-// Delete Lesson
 export const deleteLesson = async (req, res, next) => {
   try {
     const lesson = await Lesson.findById(req.params.id).populate({
       path: 'module',
-      populate: {
-        path: 'course',
-      },
+      populate: { path: 'course' },
     });
 
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    // Check authorization
-    if (lesson.module.course.instructor.toString() !== req.user._id.toString()) {
+    if (lesson.module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to delete this lesson' });
     }
 
-    // Remove lesson from module
-    await Module.findByIdAndUpdate(lesson.module._id, {
-      $pull: { lessons: req.params.id },
-    });
-
+    await Module.findByIdAndUpdate(lesson.module._id, { $pull: { lessons: req.params.id } });
     await Lesson.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({
-      success: true,
-      message: 'Lesson deleted successfully',
-    });
+    res.status(200).json({ success: true, message: 'Lesson deleted successfully' });
   } catch (error) {
     next(error);
   }
 };
 
-// Get Module Lessons
 export const getModuleLessons = async (req, res, next) => {
   try {
     const { moduleId } = req.params;
-
-    const lessons = await Lesson.find({ module: moduleId })
-      .sort({ sequenceNumber: 1 });
-
-    res.status(200).json({
-      success: true,
-      lessons,
-    });
+    const lessons = await Lesson.find({ module: moduleId }).sort({ sequenceNumber: 1 });
+    res.status(200).json({ success: true, lessons });
   } catch (error) {
     next(error);
   }
 };
 
-// Add Resources to Lesson
 export const addResources = async (req, res, next) => {
   try {
     const { resources } = req.body;
 
     const lesson = await Lesson.findById(req.params.id).populate({
       path: 'module',
-      populate: {
-        path: 'course',
-      },
+      populate: { path: 'course' },
     });
 
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    // Check authorization
-    if (lesson.module.course.instructor.toString() !== req.user._id.toString()) {
+    if (lesson.module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to modify this lesson' });
     }
 
-    if (Array.isArray(resources)) {
-      lesson.resources = [...lesson.resources, ...resources];
-    } else {
-      lesson.resources.push(resources);
-    }
+    if (Array.isArray(resources)) lesson.resources = [...lesson.resources, ...resources];
+    else lesson.resources.push(resources);
 
     await lesson.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'Resources added successfully',
-      lesson,
-    });
+    res.status(200).json({ success: true, message: 'Resources added successfully', lesson });
   } catch (error) {
     next(error);
   }
 };
 
-// Remove Resource from Lesson
 export const removeResource = async (req, res, next) => {
   try {
     const { resourceIndex } = req.body;
 
     const lesson = await Lesson.findById(req.params.id).populate({
       path: 'module',
-      populate: {
-        path: 'course',
-      },
+      populate: { path: 'course' },
     });
 
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    // Check authorization
-    if (lesson.module.course.instructor.toString() !== req.user._id.toString()) {
+    if (lesson.module.course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to modify this lesson' });
     }
 
@@ -221,17 +182,12 @@ export const removeResource = async (req, res, next) => {
       await lesson.save();
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Resource removed successfully',
-      lesson,
-    });
+    res.status(200).json({ success: true, message: 'Resource removed successfully', lesson });
   } catch (error) {
     next(error);
   }
 };
 
-// Reorder Lessons
 export const reorderLessons = async (req, res, next) => {
   try {
     const { lessons } = req.body;
@@ -244,10 +200,21 @@ export const reorderLessons = async (req, res, next) => {
       await Lesson.findByIdAndUpdate(lessons[i], { sequenceNumber: i + 1 });
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Lessons reordered successfully',
-    });
+    res.status(200).json({ success: true, message: 'Lessons reordered successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadLessonVideo = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Lesson video file is required' });
+    }
+
+    const video = await uploadVideoBuffer(req.file.buffer, 'lesson-videos');
+
+    res.status(200).json({ success: true, video });
   } catch (error) {
     next(error);
   }

@@ -72,6 +72,20 @@ export const courseAPI = {
   updateCourse: (id, data) => api.put(`/courses/${id}`, data),
   deleteCourse: (id) => api.delete(`/courses/${id}`),
   getInstructorCourses: () => api.get('/courses/instructor/my-courses'),
+  uploadThumbnail: (file) => {
+    const formData = new FormData();
+    formData.append('thumbnail', file);
+    return api.post('/courses/upload/thumbnail', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  uploadIntroVideo: (file) => {
+    const formData = new FormData();
+    formData.append('video', file);
+    return api.post('/courses/upload/intro-video', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 // Module API
@@ -93,6 +107,13 @@ export const lessonAPI = {
   deleteLesson: (id) => api.delete(`/lessons/${id}`),
   addResources: (id, data) => api.post(`/lessons/${id}/resources`, data),
   removeResource: (id, data) => api.delete(`/lessons/${id}/resource`, { data }),
+  uploadLessonVideo: (file) => {
+    const formData = new FormData();
+    formData.append('video', file);
+    return api.post('/lessons/upload/video', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 // Order API
@@ -100,6 +121,7 @@ export const orderAPI = {
   createOrder: (data) => api.post('/orders', data),
   getUserOrders: () => api.get('/orders/my-orders'),
   getOrderById: (id) => api.get(`/orders/${id}`),
+  confirmOrderPayment: (id) => api.post(`/orders/${id}/confirm`),
   createStripeSession: (data) => api.post('/orders/stripe/create-session', data),
   getAllOrders: (params) => api.get('/orders', { params }),
 };
