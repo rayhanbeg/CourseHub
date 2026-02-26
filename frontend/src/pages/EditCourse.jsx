@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { courseAPI, lessonAPI, moduleAPI } from '../services/api';
 
+const createTempId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
 const EditCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -21,10 +23,10 @@ const EditCourse = () => {
           moduleAPI.getCourseModules(courseId),
         ]);
         setCourse(courseRes.data.course);
-        // Ensure modules have lessons array initialized
         const modulesWithLessons = (modulesRes.data.modules || []).map((module) => ({
           ...module,
-          lessons: module.lessons || [],
+          isNew: false,
+          lessons: (module.lessons || []).map((lesson) => ({ ...lesson, isNew: false })),
         }));
         setModules(modulesWithLessons);
       } catch (err) {
@@ -77,35 +79,63 @@ const EditCourse = () => {
     }
   };
 
-  const handleAddSection = async () => {
-    try {
-      const { data } = await moduleAPI.createModule({
-        title: `New Section ${modules.length + 1}`,
+  const handleAddSection = () => {
+    setError('');
+    setSuccess('');
+    setModules((prev) => ([
+      ...prev,
+      {
+        _id: createTempId('temp-module'),
+        title: `New Section ${prev.length + 1}`,
         description: '',
-        courseId,
-        sequenceNumber: modules.length + 1,
-      });
-      setModules((prev) => [...prev, { ...data.module, lessons: [] }]);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add section');
-    }
+        sequenceNumber: prev.length + 1,
+        isNew: true,
+        lessons: [],
+      },
+    ]));
   };
 
   const handleSaveSection = async (module) => {
     try {
+      setError('');
+      setSuccess('');
+
+      if (module.isNew) {
+        const { data } = await moduleAPI.createModule({
+          title: module.title,
+          description: module.description || '',
+          courseId,
+          sequenceNumber: Number(module.sequenceNumber || 1),
+        });
+
+        setModules((prev) => prev.map((m) => (
+          m._id === module._id
+            ? { ...data.module, isNew: false, lessons: m.lessons || [] }
+            : m
+        )));
+        setSuccess('Section created');
+        return;
+      }
+
       await moduleAPI.updateModule(module._id, {
         title: module.title,
         description: module.description,
-        sequenceNumber: module.sequenceNumber,
+        sequenceNumber: Number(module.sequenceNumber || 1),
       });
       setSuccess('Section updated');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update section');
+      setError(err.response?.data?.message || 'Failed to save section');
     }
   };
 
   const handleDeleteSection = async (moduleId) => {
     try {
+      const module = modules.find((m) => m._id === moduleId);
+      if (module?.isNew) {
+        setModules((prev) => prev.filter((m) => m._id !== moduleId));
+        return;
+      }
+
       await moduleAPI.deleteModule(moduleId);
       setModules((prev) => prev.filter((m) => m._id !== moduleId));
     } catch (err) {
@@ -113,29 +143,89 @@ const EditCourse = () => {
     }
   };
 
-  const handleAddLesson = async (module) => {
-    try {
-      const nextSeq = (module.lessons?.length || 0) + 1;
-      const { data } = await lessonAPI.createLesson({
-        title: `Lesson ${nextSeq}`,
-        description: '',
-        videoUrl: course.introVideoUrl || '',
-        videoDuration: 0,
-        isPreview: false,
-        resources: [],
-        moduleId: module._id,
-        sequenceNumber: nextSeq,
-      });
-      setModules((prev) => prev.map((m) => (
-        m._id === module._id ? { ...m, lessons: [...(m.lessons || []), data.lesson] } : m
-      )));
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add lesson');
-    }
+  const handleAddLesson = (module) => {
+    const nextSeq = (module.lessons?.length || 0) + 1;
+    setError('');
+    setSuccess('');
+    setModules((prev) => prev.map((m) => (
+      m._id === module._id
+        ? {
+          ...m,
+          lessons: [
+            ...(m.lessons || []),
+            {
+              _id: createTempId('temp-lesson'),
+              title: `Lesson ${nextSeq}`,
+              description: '',
+              videoUrl: '',
+              videoDuration: 0,
+              isPreview: false,
+              resources: [],
+              sequenceNumber: nextSeq,
+              isNew: true,
+            },
+          ],
+        }
+        : m
+    )));
   };
 
   const handleSaveLesson = async (moduleId, lesson) => {
     try {
+      setError('');
+      setSuccess('');
+
+      let targetModuleId = moduleId;
+      const module = modules.find((m) => m._id === moduleId);
+
+      if (module?.isNew) {
+        const { data: moduleData } = await moduleAPI.createModule({
+          title: module.title,
+          description: module.description || '',
+          courseId,
+          sequenceNumber: Number(module.sequenceNumber || 1),
+        });
+
+        targetModuleId = moduleData.module._id;
+        setModules((prev) => prev.map((m) => (
+          m._id === moduleId
+            ? { ...moduleData.module, isNew: false, lessons: m.lessons || [] }
+            : m
+        )));
+      }
+
+      if (lesson.isNew) {
+        if (!lesson.videoUrl) {
+          setError('Please upload lesson video before saving a new lesson');
+          return;
+        }
+
+        const { data } = await lessonAPI.createLesson({
+          title: lesson.title,
+          description: lesson.description || '',
+          videoUrl: lesson.videoUrl,
+          videoDuration: Number(lesson.videoDuration || 0),
+          isPreview: !!lesson.isPreview,
+          resources: lesson.resources || [],
+          moduleId: targetModuleId,
+          sequenceNumber: Number(lesson.sequenceNumber || 1),
+        });
+
+        setModules((prev) => prev.map((m) => (
+          m._id !== targetModuleId
+            ? m
+            : {
+              ...m,
+              lessons: (m.lessons || []).map((l) => (
+                l._id === lesson._id ? { ...data.lesson, isNew: false } : l
+              )),
+            }
+        )));
+
+        setSuccess('Lesson created');
+        return;
+      }
+
       const payload = {
         title: lesson.title,
         description: lesson.description,
@@ -146,15 +236,35 @@ const EditCourse = () => {
         resources: lesson.resources || [],
       };
       const { data } = await lessonAPI.updateLesson(lesson._id, payload);
-      updateLessonField(moduleId, lesson._id, 'title', data.lesson.title);
+
+      setModules((prev) => prev.map((m) => (
+        m._id !== targetModuleId
+          ? m
+          : {
+            ...m,
+            lessons: (m.lessons || []).map((l) => (
+              l._id === lesson._id ? { ...data.lesson, isNew: false } : l
+            )),
+          }
+      )));
       setSuccess('Lesson updated');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update lesson');
+      setError(err.response?.data?.message || 'Failed to save lesson');
     }
   };
 
   const handleDeleteLesson = async (moduleId, lessonId) => {
     try {
+      const module = modules.find((m) => m._id === moduleId);
+      const lesson = module?.lessons?.find((l) => l._id === lessonId);
+
+      if (lesson?.isNew) {
+        setModules((prev) => prev.map((m) => (
+          m._id !== moduleId ? m : { ...m, lessons: (m.lessons || []).filter((l) => l._id !== lessonId) }
+        )));
+        return;
+      }
+
       await lessonAPI.deleteLesson(lessonId);
       setModules((prev) => prev.map((m) => (
         m._id !== moduleId ? m : { ...m, lessons: (m.lessons || []).filter((l) => l._id !== lessonId) }
