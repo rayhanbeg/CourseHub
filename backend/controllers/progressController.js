@@ -1,26 +1,122 @@
 import Progress from '../models/Progress.js';
-import Course from '../models/Course.js';
+import Module from '../models/Module.js';
+
+const buildCourseLessonOrder = async (courseId) => {
+  const modules = await Module.find({ course: courseId })
+    .select('lessons sequenceNumber')
+    .sort({ sequenceNumber: 1 })
+    .populate('lessons', '_id sequenceNumber');
+
+  const lessonIds = [];
+
+  modules.forEach((module) => {
+    const sortedLessons = [...(module.lessons || [])].sort(
+      (a, b) => (a.sequenceNumber || 0) - (b.sequenceNumber || 0)
+    );
+
+    sortedLessons.forEach((lesson) => {
+      lessonIds.push(lesson._id.toString());
+    });
+  });
+
+  return lessonIds;
+};
+
+const recalculateProgressSummary = (progress) => {
+  const totalLessons = progress.lessons.length;
+  const completedLessons = progress.lessons.filter((lesson) => lesson.isCompleted).length;
+
+  progress.overallProgress = totalLessons > 0
+    ? Math.round((completedLessons / totalLessons) * 100)
+    : 0;
+
+  if (progress.overallProgress === 100 && totalLessons > 0) {
+    if (!progress.isCompleted) {
+      progress.isCompleted = true;
+      progress.completedAt = new Date();
+    }
+  } else {
+    progress.isCompleted = false;
+    progress.completedAt = null;
+  }
+};
+
+const syncProgressWithCourseLessons = async (progress, courseId) => {
+  const courseLessonIds = await buildCourseLessonOrder(courseId);
+  const currentMap = new Map(
+    progress.lessons.map((lessonProgress) => [
+      lessonProgress.lesson.toString(),
+      lessonProgress,
+    ])
+  );
+
+  const syncedLessons = courseLessonIds.map((lessonId) => {
+    const existing = currentMap.get(lessonId);
+
+    if (existing) {
+      return {
+        lesson: existing.lesson,
+        isCompleted: existing.isCompleted,
+        watchTime: existing.watchTime,
+        completedAt: existing.completedAt,
+      };
+    }
+
+    return {
+      lesson: lessonId,
+      isCompleted: false,
+      watchTime: 0,
+      completedAt: null,
+    };
+  });
+
+  const hasChanged =
+    syncedLessons.length !== progress.lessons.length ||
+    syncedLessons.some((lesson, index) => {
+      const current = progress.lessons[index];
+      if (!current) return true;
+
+      return (
+        current.lesson.toString() !== lesson.lesson.toString() ||
+        current.isCompleted !== lesson.isCompleted ||
+        current.watchTime !== lesson.watchTime ||
+        (current.completedAt?.toISOString?.() || null) !== (lesson.completedAt?.toISOString?.() || null)
+      );
+    });
+
+  if (hasChanged) {
+    progress.lessons = syncedLessons;
+    recalculateProgressSummary(progress);
+    await progress.save();
+  }
+
+  return progress;
+};
 
 // Get User Course Progress
 export const getCourseProgress = async (req, res, next) => {
   try {
     const { courseId } = req.params;
 
-    const progress = await Progress.findOne({
+    let progress = await Progress.findOne({
       student: req.user._id,
       course: courseId,
-    }).populate({
-      path: 'lessons.lesson',
-      select: 'title videoDuration',
     });
 
     if (!progress) {
       return res.status(404).json({ message: 'Progress not found' });
     }
 
+    progress = await syncProgressWithCourseLessons(progress, courseId);
+
+    const populatedProgress = await Progress.findById(progress._id).populate({
+      path: 'lessons.lesson',
+      select: 'title videoDuration',
+    });
+
     res.status(200).json({
       success: true,
-      progress,
+      progress: populatedProgress,
     });
   } catch (error) {
     next(error);
@@ -42,18 +138,22 @@ export const updateLessonProgress = async (req, res, next) => {
       return res.status(404).json({ message: 'Progress not found' });
     }
 
+    progress = await syncProgressWithCourseLessons(progress, courseId);
+
     const lessonIndex = progress.lessons.findIndex(
-      (l) => l.lesson.toString() === lessonId
+      (lessonProgress) => lessonProgress.lesson.toString() === lessonId
     );
 
     if (lessonIndex === -1) {
-      return res.status(404).json({ message: 'Lesson not found in progress' });
+      return res.status(404).json({ message: 'Lesson not found in this course progress' });
     }
 
     if (isCompleted !== undefined) {
       progress.lessons[lessonIndex].isCompleted = isCompleted;
-      if (isCompleted && !progress.lessons[lessonIndex].completedAt) {
+      if (isCompleted) {
         progress.lessons[lessonIndex].completedAt = new Date();
+      } else {
+        progress.lessons[lessonIndex].completedAt = null;
       }
     }
 
@@ -61,24 +161,19 @@ export const updateLessonProgress = async (req, res, next) => {
       progress.lessons[lessonIndex].watchTime = watchTime;
     }
 
-    // Calculate overall progress
-    const completedLessons = progress.lessons.filter((l) => l.isCompleted).length;
-    progress.overallProgress = Math.round(
-      (completedLessons / progress.lessons.length) * 100
-    );
-
-    // Check if course is completed
-    if (progress.overallProgress === 100 && !progress.isCompleted) {
-      progress.isCompleted = true;
-      progress.completedAt = new Date();
-    }
+    recalculateProgressSummary(progress);
 
     await progress.save();
+
+    const populatedProgress = await Progress.findById(progress._id).populate({
+      path: 'lessons.lesson',
+      select: 'title videoDuration',
+    });
 
     res.status(200).json({
       success: true,
       message: 'Progress updated successfully',
-      progress,
+      progress: populatedProgress,
     });
   } catch (error) {
     next(error);
