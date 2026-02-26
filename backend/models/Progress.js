@@ -52,4 +52,6 @@ const ProgressSchema = new mongoose.Schema(
   }
 );
 
+ProgressSchema.index({ student: 1, course: 1 }, { unique: true });
+
 export default mongoose.model('Progress', ProgressSchema);

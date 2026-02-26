@@ -94,9 +94,19 @@ export const getAllUserProgress = async (req, res, next) => {
       .populate('course', 'title thumbnail')
       .sort({ updatedAt: -1 });
 
+    const seenCourseIds = new Set();
+    const uniqueProgress = progressList.filter((progress) => {
+      const courseId = progress.course?._id?.toString();
+      if (!courseId || seenCourseIds.has(courseId)) {
+        return false;
+      }
+      seenCourseIds.add(courseId);
+      return true;
+    });
+
     res.status(200).json({
       success: true,
-      progress: progressList,
+      progress: uniqueProgress,
     });
   } catch (error) {
     next(error);

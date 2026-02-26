@@ -34,30 +34,39 @@ const finalizeEnrollment = async (order) => {
   order.enrollmentDate = order.enrollmentDate || new Date();
   await order.save();
 
-  const user = await User.findById(order.student);
-  const alreadyEnrolled = user.enrolledCourses.some((c) => c.courseId.toString() === order.course.toString());
+  const enrollmentResult = await User.updateOne(
+    {
+      _id: order.student,
+      'enrolledCourses.courseId': { $ne: order.course },
+    },
+    {
+      $push: {
+        enrolledCourses: {
+          courseId: order.course,
+          enrolledAt: new Date(),
+        },
+      },
+    }
+  );
 
-  if (!alreadyEnrolled) {
-    user.enrolledCourses.push({
-      courseId: order.course,
-      enrolledAt: new Date(),
-    });
-    await user.save();
+  if (enrollmentResult.modifiedCount > 0) {
     await Course.findByIdAndUpdate(order.course, { $inc: { enrollmentCount: 1 } });
   }
 
-  let progress = await Progress.findOne({ student: order.student, course: order.course });
-  if (!progress) {
-    const lessonProgress = await buildProgressLessons(order.course);
-    progress = new Progress({
-      student: order.student,
-      course: order.course,
-      lessons: lessonProgress,
-      overallProgress: 0,
-      isCompleted: false,
-    });
-    await progress.save();
-  }
+  const lessonProgress = await buildProgressLessons(order.course);
+  await Progress.updateOne(
+    { student: order.student, course: order.course },
+    {
+      $setOnInsert: {
+        student: order.student,
+        course: order.course,
+        lessons: lessonProgress,
+        overallProgress: 0,
+        isCompleted: false,
+      },
+    },
+    { upsert: true }
+  );
 
   return order;
 };
