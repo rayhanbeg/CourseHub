@@ -46,7 +46,7 @@ const validationSchemas = {
   // Module Validation
   createModule: Joi.object({
     title: Joi.string().required(),
-    description: Joi.string(),
+    description: Joi.string().allow(''),
     courseId: Joi.string().required(),
     sequenceNumber: Joi.number().required(),
   }),
@@ -54,7 +54,7 @@ const validationSchemas = {
   // Lesson Validation
   createLesson: Joi.object({
     title: Joi.string().required(),
-    description: Joi.string(),
+    description: Joi.string().allow(''),
     videoUrl: Joi.string().allow('').optional(),
     videoDuration: Joi.number(),
     isPreview: Joi.boolean().optional(),
