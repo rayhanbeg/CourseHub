@@ -185,12 +185,20 @@ export const getAllUserProgress = async (req, res, next) => {
   try {
     const progressList = await Progress.find({
       student: req.user._id,
+    }).sort({ updatedAt: -1 });
+
+    for (const progress of progressList) {
+      await syncProgressWithCourseLessons(progress, progress.course);
+    }
+
+    const refreshedProgressList = await Progress.find({
+      student: req.user._id,
     })
       .populate('course', 'title thumbnail')
       .sort({ updatedAt: -1 });
 
     const seenCourseIds = new Set();
-    const uniqueProgress = progressList.filter((progress) => {
+    const uniqueProgress = refreshedProgressList.filter((progress) => {
       const courseId = progress.course?._id?.toString();
       if (!courseId || seenCourseIds.has(courseId)) {
         return false;
