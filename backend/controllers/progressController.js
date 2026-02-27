@@ -15,7 +15,9 @@ const buildCourseLessonOrder = async (courseId) => {
     );
 
     sortedLessons.forEach((lesson) => {
-      lessonIds.push(lesson._id.toString());
+      if (lesson?._id) {
+        lessonIds.push(lesson._id.toString());
+      }
     });
   });
 
@@ -31,14 +33,58 @@ const recalculateProgressSummary = (progress) => {
     : 0;
 
   if (progress.overallProgress === 100 && totalLessons > 0) {
-    if (!progress.isCompleted) {
-      progress.isCompleted = true;
-      progress.completedAt = new Date();
-    }
+    progress.isCompleted = true;
+    progress.completedAt = progress.completedAt || new Date();
   } else {
     progress.isCompleted = false;
     progress.completedAt = null;
   }
+};
+
+const mergeProgressDocs = (primary, secondaryDocs) => {
+  const lessonMap = new Map(
+    primary.lessons.map((lessonProgress) => [lessonProgress.lesson.toString(), lessonProgress])
+  );
+
+  secondaryDocs.forEach((doc) => {
+    (doc.lessons || []).forEach((lessonProgress) => {
+      const lessonId = lessonProgress.lesson.toString();
+      const existing = lessonMap.get(lessonId);
+
+      if (!existing) {
+        lessonMap.set(lessonId, {
+          lesson: lessonProgress.lesson,
+          isCompleted: lessonProgress.isCompleted,
+          watchTime: lessonProgress.watchTime,
+          completedAt: lessonProgress.completedAt,
+        });
+        return;
+      }
+
+      existing.isCompleted = existing.isCompleted || lessonProgress.isCompleted;
+      existing.watchTime = Math.max(existing.watchTime || 0, lessonProgress.watchTime || 0);
+      existing.completedAt = existing.completedAt || lessonProgress.completedAt || null;
+    });
+  });
+
+  primary.lessons = Array.from(lessonMap.values());
+};
+
+const getCanonicalProgress = async (studentId, courseId) => {
+  const progressDocs = await Progress.find({ student: studentId, course: courseId }).sort({ updatedAt: -1 });
+  if (progressDocs.length === 0) return null;
+
+  const [primary, ...duplicates] = progressDocs;
+
+  if (duplicates.length > 0) {
+    mergeProgressDocs(primary, duplicates);
+    recalculateProgressSummary(primary);
+    await primary.save();
+
+    await Progress.deleteMany({ _id: { $in: duplicates.map((doc) => doc._id) } });
+  }
+
+  return primary;
 };
 
 const syncProgressWithCourseLessons = async (progress, courseId) => {
@@ -98,10 +144,7 @@ export const getCourseProgress = async (req, res, next) => {
   try {
     const { courseId } = req.params;
 
-    let progress = await Progress.findOne({
-      student: req.user._id,
-      course: courseId,
-    });
+    let progress = await getCanonicalProgress(req.user._id, courseId);
 
     if (!progress) {
       return res.status(404).json({ message: 'Progress not found' });
@@ -129,10 +172,7 @@ export const updateLessonProgress = async (req, res, next) => {
     const { courseId, lessonId } = req.params;
     const { isCompleted, watchTime } = req.body;
 
-    let progress = await Progress.findOne({
-      student: req.user._id,
-      course: courseId,
-    });
+    let progress = await getCanonicalProgress(req.user._id, courseId);
 
     if (!progress) {
       return res.status(404).json({ message: 'Progress not found' });
@@ -150,11 +190,7 @@ export const updateLessonProgress = async (req, res, next) => {
 
     if (isCompleted !== undefined) {
       progress.lessons[lessonIndex].isCompleted = isCompleted;
-      if (isCompleted) {
-        progress.lessons[lessonIndex].completedAt = new Date();
-      } else {
-        progress.lessons[lessonIndex].completedAt = null;
-      }
+      progress.lessons[lessonIndex].completedAt = isCompleted ? new Date() : null;
     }
 
     if (watchTime !== undefined) {
@@ -183,12 +219,15 @@ export const updateLessonProgress = async (req, res, next) => {
 // Get All User Progress
 export const getAllUserProgress = async (req, res, next) => {
   try {
-    const progressList = await Progress.find({
-      student: req.user._id,
-    }).sort({ updatedAt: -1 });
+    const progressList = await Progress.find({ student: req.user._id }).select('course');
 
-    for (const progress of progressList) {
-      await syncProgressWithCourseLessons(progress, progress.course);
+    const uniqueCourseIds = [...new Set(progressList.map((progress) => progress.course.toString()))];
+
+    for (const courseId of uniqueCourseIds) {
+      const canonical = await getCanonicalProgress(req.user._id, courseId);
+      if (canonical) {
+        await syncProgressWithCourseLessons(canonical, courseId);
+      }
     }
 
     const refreshedProgressList = await Progress.find({
