@@ -38,13 +38,13 @@ const CoursesList = () => {
     <div className="min-h-screen bg-light">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-secondary text-white py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">Explore Courses</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h1 className="text-3xl sm:text-4xl font-semibold mb-3">Explore Courses</h1>
           <p className="text-blue-100">Learn new skills from industry experts</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative">
@@ -61,8 +61,8 @@ const CoursesList = () => {
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
-          <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow p-6 sticky top-4">
+          <div className="lg:w-72 flex-shrink-0">
+            <div className="bg-white rounded-lg border border-slate-200 p-5 lg:sticky lg:top-20">
               <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                 <Filter className="w-5 h-5" /> Filters
               </h3>
@@ -146,7 +146,7 @@ const CoursesList = () => {
                 <Loader className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : courses.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-12 text-center">
+              <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
                 <p className="text-gray-500 text-lg">No courses found</p>
               </div>
             ) : (

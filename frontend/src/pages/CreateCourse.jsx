@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { courseAPI, lessonAPI, moduleAPI } from '../services/api';
 import { ArrowLeft, CheckCircle2, Loader, Plus, Trash2, Upload } from 'lucide-react';
-import Navbar from '../components/AppNavbar';
 
 const emptyLesson = () => ({
   title: '',
@@ -203,20 +202,19 @@ const CreateCourse = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Navbar />
       <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-6">
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <button onClick={() => navigate('/admin/dashboard')} className="inline-flex items-center gap-2 text-blue-100 hover:text-white mb-3"><ArrowLeft className="w-5 h-5" /> Back</button>
-          <h1 className="text-3xl font-bold">Create Professional Course</h1>
-          <p className="text-blue-100">Intro + sections + multiple lessons structure</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold">Create Course</h1>
+          <p className="text-blue-100 text-sm sm:text-base">Build a clean course structure with sections and lessons.</p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {success && <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-800 flex items-center gap-2"><CheckCircle2 className="w-5 h-5" /> Course created successfully.</div>}
         {error && <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="text-sm font-semibold">Title *</label>

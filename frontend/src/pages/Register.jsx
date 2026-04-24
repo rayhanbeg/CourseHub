@@ -47,10 +47,10 @@ const Register = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary to-light flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-dark mb-2">Get Started</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-dark mb-2">Get Started</h1>
             <p className="text-gray-600">Create an account to start learning</p>
           </div>
 

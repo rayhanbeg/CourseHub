@@ -96,7 +96,7 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-light py-8">
-      <div className="max-w-2xl mx-auto px-4">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <button
           onClick={() => navigate(`/courses/${courseId}`)}
           className="flex items-center gap-2 text-primary hover:text-secondary mb-6"
@@ -105,12 +105,12 @@ const Checkout = () => {
           Back to Course
         </button>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           {/* Course Summary */}
-          <div className="border-b border-gray-200 p-8">
-            <h1 className="text-3xl font-bold mb-4 text-dark">Checkout</h1>
+          <div className="border-b border-gray-200 p-5 sm:p-8">
+            <h1 className="text-2xl sm:text-3xl font-semibold mb-4 text-dark">Checkout</h1>
 
-            <div className="flex gap-6">
+            <div className="flex flex-col sm:flex-row gap-6">
               {course.thumbnail && (
                 <img
                   src={course.thumbnail || "/placeholder.svg"}
@@ -132,7 +132,7 @@ const Checkout = () => {
           </div>
 
           {/* Payment Section */}
-          <div className="p-8">
+          <div className="p-5 sm:p-8">
             {error && (
               <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                 {error}

@@ -38,8 +38,8 @@ const CheckoutSuccess = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-light py-12">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-10 text-center">
           {/* Success Icon */}
           <div className="flex justify-center mb-6">
             <div className="bg-green-100 rounded-full p-6">
@@ -48,7 +48,7 @@ const CheckoutSuccess = () => {
           </div>
 
           {/* Success Message */}
-          <h1 className="text-4xl font-bold text-dark mb-2">Payment Successful!</h1>
+          <h1 className="text-3xl sm:text-4xl font-semibold text-dark mb-2">Payment Successful!</h1>
           <p className="text-gray-600 text-lg mb-8">
             Thank you for your purchase. You now have access to the course.
           </p>

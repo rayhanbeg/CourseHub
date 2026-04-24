@@ -96,21 +96,21 @@ const CourseDetails = () => {
 
   return (
     <div className="min-h-screen bg-light py-10">
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <Link to="/courses" className="inline-flex items-center gap-2 text-primary hover:text-secondary mb-6 font-semibold">
           <ArrowLeft className="w-5 h-5" /> Back to Courses
         </Link>
 
-        <div className="bg-white rounded-2xl shadow overflow-hidden">
-          <img src={course.thumbnail} alt={course.title} className="w-full h-72 object-cover" />
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <img src={course.thumbnail} alt={course.title} className="w-full h-56 sm:h-72 object-cover" />
 
-          <div className="p-8">
+          <div className="p-5 sm:p-8">
             <div className="flex flex-wrap gap-3 mb-4">
               <span className="px-3 py-1 rounded-full text-xs bg-blue-100 text-primary font-semibold">{course.category}</span>
               <span className="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700 font-semibold">{course.level}</span>
             </div>
 
-            <h1 className="text-3xl font-bold text-dark mb-3">{course.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-dark mb-3">{course.title}</h1>
             <p className="text-gray-600 leading-relaxed mb-6 whitespace-pre-line">{course.description}</p>
 
             <div className="grid md:grid-cols-3 gap-4 mb-8">
@@ -169,7 +169,7 @@ const CourseDetails = () => {
               <p className="text-3xl font-bold text-primary">${course.price}</p>
               <button
                 onClick={handleEnroll}
-                className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-secondary transition"
+                className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-secondary transition"
               >
                 {enrollButtonLabel}
               </button>

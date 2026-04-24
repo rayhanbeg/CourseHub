@@ -179,14 +179,14 @@ const EditCourse = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <Link to="/admin/dashboard" className="inline-flex items-center gap-2 text-primary font-semibold"><ArrowLeft className="w-5 h-5" /> Back to Dashboard</Link>
           <button onClick={() => navigate(`/courses/${courseId}`)} className="px-4 py-2 border rounded-lg hover:bg-white">Preview Public Page</button>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 bg-white rounded-xl shadow p-5 h-fit">
+          <div className="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-5 h-fit">
             <h2 className="text-xl font-bold mb-4">Course Info</h2>
             {error && <div className="mb-3 text-red-600 text-sm">{error}</div>}
             {success && <div className="mb-3 text-green-700 text-sm">{success}</div>}
@@ -209,7 +209,7 @@ const EditCourse = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-2 bg-white rounded-xl shadow p-5">
+          <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Full Course Outline</h2>
               <button onClick={handleAddSection} className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-slate-50"><Plus className="w-4 h-4" /> Add Section</button>
