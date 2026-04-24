@@ -120,14 +120,14 @@ const CoursePlayer = () => {
     <div className="min-h-screen bg-light">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-secondary text-white py-4 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <button
             onClick={() => navigate('/dashboard')}
             className="text-blue-100 hover:text-white mb-2"
           >
             ← Back to Dashboard
           </button>
-          <h1 className="text-2xl font-bold">{course.title}</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold">{course.title}</h1>
           {progress && (
             <div className="mt-2 flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ const CoursePlayer = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Video Player */}
           <div className="lg:col-span-2">
@@ -164,9 +164,9 @@ const CoursePlayer = () => {
                 />
 
                 {/* Lesson Info */}
-                <div className="mt-6 bg-white rounded-lg shadow p-6">
+                <div className="mt-6 bg-white rounded-lg border border-slate-200 p-5 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-dark">{selectedLesson.title}</h2>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-dark">{selectedLesson.title}</h2>
                     {isLessonCompleted && (
                       <div className="flex items-center gap-2 text-accent">
                         <CheckCircle className="w-6 h-6" />
@@ -196,7 +196,7 @@ const CoursePlayer = () => {
 
           {/* Modules Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow sticky top-20">
+            <div className="bg-white rounded-lg border border-slate-200 lg:sticky lg:top-20">
               <div className="p-6 border-b border-gray-200">
                 <h3 className="font-bold text-lg text-dark">Course Content</h3>
                 <p className="text-sm text-gray-600 mt-1">

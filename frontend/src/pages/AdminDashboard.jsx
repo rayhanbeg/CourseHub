@@ -120,9 +120,9 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-gradient-to-r from-primary to-secondary text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 flex items-end justify-between gap-4 flex-wrap">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-end justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
+            <h1 className="text-3xl sm:text-4xl font-semibold mb-2">Admin Dashboard</h1>
             <p className="text-blue-100">Manage courses, orders, and track analytics</p>
           </div>
           <Link to="/admin/create-course" className="inline-flex items-center gap-2 px-5 py-3 bg-white/95 text-primary font-semibold rounded-xl hover:bg-white transition">
@@ -131,7 +131,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">{error}</div>}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

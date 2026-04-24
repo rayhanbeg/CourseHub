@@ -45,16 +45,16 @@ const StudentDashboard = () => {
     <div className="min-h-screen bg-light">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-secondary text-white py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-2">Welcome back, {auth.user?.name}!</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h1 className="text-3xl sm:text-4xl font-semibold mb-2">Welcome back, {auth.user?.name}!</h1>
           <p className="text-blue-100">Continue your learning journey</p>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Total Courses</p>
@@ -64,7 +64,7 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">In Progress</p>
@@ -74,7 +74,7 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Completed</p>
@@ -84,7 +84,7 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Average Progress</p>
