@@ -38,6 +38,11 @@ const ProgressSchema = new mongoose.Schema(
       min: 0,
       max: 100,
     },
+    completedLessons: { type: Number, default: 0, min: 0 },
+    totalLessons: { type: Number, default: 0, min: 0 },
+    lastLesson: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson', default: null },
+    lastPosition: { type: Number, default: 0, min: 0 },
+    certificateId: { type: String },
     isCompleted: {
       type: Boolean,
       default: false,
@@ -53,5 +58,6 @@ const ProgressSchema = new mongoose.Schema(
 );
 
 ProgressSchema.index({ student: 1, course: 1 }, { unique: true });
+ProgressSchema.index({ certificateId: 1 }, { unique: true, partialFilterExpression: { certificateId: { $type: 'string' } } });
 
 export default mongoose.model('Progress', ProgressSchema);

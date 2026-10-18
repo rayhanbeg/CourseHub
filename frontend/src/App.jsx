@@ -5,23 +5,29 @@ import { AuthProvider } from './context/AuthContext';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
+import AdminLayout from './layouts/AdminLayout';
 
 // Pages
 import Home from './pages/Home';
 import CoursesList from './pages/CoursesList';
 import CourseDetails from './pages/CourseDetails';
 import CoursePlayer from './pages/CoursePlayer';
-import Checkout from './pages/Checkout';
+import Checkout, { CheckoutSkeleton } from './pages/Checkout';
 import CheckoutSuccess from './pages/CheckoutSuccess';
+import CheckoutCancel from './pages/CheckoutCancel';
+import OrderHistory from './pages/OrderHistory';
 import StudentDashboard from './pages/StudentDashboard';
-import AdminDashboard from './pages/AdminDashboard';
 import CreateCourse from './pages/CreateCourse';
 import EditCourse from './pages/EditCourse';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Components
 import { ProtectedRoute } from './components';
+
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 
 // Error Page Component
 const ErrorPage = () => {
@@ -56,8 +62,12 @@ const ScrollToTop = () => {
   const location = useLocation();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+    if (location.hash) {
+      window.setTimeout(() => document.querySelector(location.hash)?.scrollIntoView(), 0);
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname, location.hash]);
 
   return null;
 };
@@ -98,6 +108,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'my-learning',
+        element: <ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>,
+      },
+      {
+        path: 'dashboard/orders',
+        element: <ProtectedRoute requiredRole="student"><OrderHistory /></ProtectedRoute>,
+      },
+      {
         path: 'course/:courseId',
         element: (
           <ProtectedRoute requiredRole="student">
@@ -108,7 +126,7 @@ const router = createBrowserRouter([
       {
         path: 'checkout/:courseId',
         element: (
-          <ProtectedRoute requiredRole="student">
+          <ProtectedRoute requiredRole="student" loadingFallback={<CheckoutSkeleton />}>
             <Checkout />
           </ProtectedRoute>
         ),
@@ -117,32 +135,27 @@ const router = createBrowserRouter([
         path: 'checkout-success',
         element: <CheckoutSuccess />,
       },
+      {
+        path: 'checkout-cancel',
+        element: <CheckoutCancel />,
+      },
 
-      // Protected Admin Routes
-      {
-        path: 'admin/dashboard',
-        element: (
-          <ProtectedRoute requiredRole="admin">
-            <AdminDashboard />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'admin/create-course',
-        element: (
-          <ProtectedRoute requiredRole="admin">
-            <CreateCourse />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'admin/edit-course/:courseId',
-        element: (
-          <ProtectedRoute requiredRole="admin">
-            <EditCourse />
-          </ProtectedRoute>
-        ),
-      },
+    ],
+  },
+
+  // Admin routes intentionally use their own shell, outside the public layout.
+  {
+    path: '/admin',
+    element: <ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>,
+    errorElement: <ErrorPage />,
+    children: [
+      { path: 'dashboard', element: <AdminDashboard /> },
+      ...['courses', 'orders', 'students'].map((section) => ({
+        path: `dashboard/${section}`,
+        element: <AdminDashboard />,
+      })),
+      { path: 'create-course', element: <CreateCourse /> },
+      { path: 'edit-course/:courseId', element: <EditCourse /> },
     ],
   },
 
@@ -163,6 +176,16 @@ const router = createBrowserRouter([
         <Register />
       </LayoutWithScrollToTop>
     ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/forgot-password',
+    element: <LayoutWithScrollToTop><ForgotPassword /></LayoutWithScrollToTop>,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/reset-password',
+    element: <LayoutWithScrollToTop><ResetPassword /></LayoutWithScrollToTop>,
     errorElement: <ErrorPage />,
   },
 

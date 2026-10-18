@@ -1,11 +1,12 @@
 const errorHandler = (err, req, res, next) => {
-  console.error(err);
+  if (res.headersSent) return next(err);
+  if (process.env.NODE_ENV !== 'production') console.error(err);
 
   // Validation error
   if (err.errors) {
     return res.status(400).json({
       message: 'Validation Error',
-      errors: err.errors,
+      errors: process.env.NODE_ENV === 'production' ? undefined : err.errors,
     });
   }
 
@@ -27,8 +28,9 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // Default error
-  res.status(err.statusCode || 500).json({
-    message: err.message || 'Internal Server Error',
+  const statusCode = err.statusCode || err.status || 500;
+  res.status(statusCode).json({
+    message: statusCode >= 500 && process.env.NODE_ENV === 'production' ? 'An unexpected server error occurred.' : err.message || 'Internal Server Error',
   });
 };
 

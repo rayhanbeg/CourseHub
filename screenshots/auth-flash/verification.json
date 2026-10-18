@@ -1,0 +1,722 @@
+[
+  {
+    "pathname": "/",
+    "attempt": 1,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 2,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 3,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 4,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 5,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 6,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 7,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 8,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 9,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/",
+    "attempt": 10,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 1,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 2,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 3,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 4,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 5,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 6,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 7,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 8,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 9,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/courses",
+    "attempt": 10,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 1,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 2,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 3,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 4,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 5,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 6,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 7,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 8,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 9,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  },
+  {
+    "pathname": "/my-learning",
+    "attempt": 10,
+    "loading": {
+      "signInVisible": false,
+      "skeletonVisible": true,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 623.8125
+    },
+    "settled": {
+      "signInVisible": false,
+      "authSlot": {
+        "width": 150,
+        "height": 44
+      },
+      "navbarWidth": 1200,
+      "linksLeft": 620.765625,
+      "linksWidth": 198.453125
+    }
+  }
+]

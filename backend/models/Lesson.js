@@ -18,8 +18,11 @@ const LessonSchema = new mongoose.Schema(
     },
     videoUrl: {
       type: String,
-      required: [true, 'Please provide a video URL'],
+      default: '',
     },
+    videoPublicId: { type: String, default: '' },
+    videoFormat: { type: String, default: 'mp4' },
+    videoDeliveryType: { type: String, enum: ['upload', 'authenticated'], default: 'authenticated' },
     videoDuration: {
       type: Number,
       default: 0,

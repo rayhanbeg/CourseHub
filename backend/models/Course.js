@@ -12,9 +12,24 @@ const CourseSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please provide a description'],
     },
+    shortDescription: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: [240, 'Short description cannot exceed 240 characters'],
+    },
+    fullDescription: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    learningOutcomes: {
+      type: [String],
+      default: [],
+    },
     thumbnail: {
       type: String,
-      required: true,
+      required: function requireThumbnailWhenPublished() { return this.isPublished; },
     },
     instructor: {
       type: mongoose.Schema.Types.ObjectId,

@@ -12,6 +12,8 @@ const OrderSchema = new mongoose.Schema(
       ref: 'Course',
       required: true,
     },
+    courseTitle: { type: String, default: '', trim: true },
+    coursePrice: { type: Number, default: null },
     amount: {
       type: Number,
       required: true,
@@ -22,12 +24,12 @@ const OrderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['stripe', 'sslcommerz'],
+      enum: ['stripe', 'free'],
       required: true,
     },
     status: {
       type: String,
-      enum: ['pending', 'completed', 'failed', 'cancelled'],
+      enum: ['pending', 'completed', 'failed', 'refunded'],
       default: 'pending',
     },
     transactionId: {
@@ -40,6 +42,14 @@ const OrderSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    stripePaymentIntentId: { type: String, unique: true, sparse: true },
+    stripeChargeId: { type: String, default: null },
+    cardBrand: { type: String, default: null },
+    cardLast4: { type: String, default: null },
+    sessionAttempt: { type: Number, default: 0 },
+    paidAt: { type: Date, default: null },
+    failedAt: { type: Date, default: null },
+    refundedAt: { type: Date, default: null },
     enrollmentDate: {
       type: Date,
       default: null,
@@ -49,5 +59,8 @@ const OrderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+OrderSchema.index({ student: 1, course: 1 }, { unique: true, partialFilterExpression: { status: 'pending', paymentMethod: 'stripe' } });
+OrderSchema.index({ student: 1, course: 1 }, { unique: true, partialFilterExpression: { paymentMethod: 'free' } });
 
 export default mongoose.model('Order', OrderSchema);

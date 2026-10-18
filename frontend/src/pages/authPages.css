@@ -1,0 +1,77 @@
+.auth-experience { min-height: 100vh; background: var(--color-paper); }
+.auth-layout { min-height: 100vh; display: grid; grid-template-columns: minmax(480px, .92fr) minmax(420px, 1.08fr); }
+.auth-form-side { display: flex; flex-direction: column; padding: clamp(1.5rem, 4vw, 3.75rem); }
+.auth-brand { width: fit-content; display: inline-flex; align-items: center; gap: .6rem; color: var(--color-ink); font: 500 1.2rem var(--font-display); text-decoration: none; }
+.auth-brand > span { width: 34px; height: 34px; display: grid; place-items: center; color: var(--color-accent); background: var(--color-accent-soft); border-radius: var(--radius-sm); }
+.auth-form-content { width: min(100%, 430px); margin: auto; padding-block: 3rem; }
+.auth-heading { margin-bottom: 2rem; }
+.auth-heading .eyebrow { margin-bottom: .8rem; }
+.auth-heading h1 { margin: 0; font-size: clamp(2.25rem, 4vw, 3.25rem); font-weight: 500; letter-spacing: -.02em; line-height: 1.08; }
+.auth-heading > p:last-child { margin: .7rem 0 0; color: var(--color-muted); font-size: .94rem; }
+.auth-form { display: grid; gap: 1.15rem; }
+.auth-field { display: grid; gap: .45rem; }
+.auth-field > label { color: var(--color-ink); font-size: .8rem; font-weight: 600; }
+.auth-input-wrap { min-height: 48px; display: flex; align-items: center; gap: .65rem; padding: 0 .8rem; color: var(--color-subtle); background: var(--color-surface); border: 1px solid var(--color-line-strong); border-radius: var(--radius-sm); transition: border-color var(--motion-fast), box-shadow var(--motion-fast); }
+.auth-input-wrap:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 14%, transparent); }
+.auth-input-wrap.has-error { border-color: var(--color-danger); }
+.auth-input-wrap > input { width: 100%; min-width: 0; height: 46px; color: var(--color-ink); background: transparent; border: 0; outline: 0; font-size: .9rem; }
+.auth-input-wrap > input:focus-visible { outline: 0; }
+.auth-input-wrap > input::placeholder { color: var(--color-subtle); }
+.auth-field-icon { flex: 0 0 auto; }
+.auth-field-error { margin: 0; color: var(--color-danger); font-size: .75rem; }
+.password-toggle { padding: .35rem; color: var(--color-accent); background: transparent; border: 0; font-size: .75rem; font-weight: 700; cursor: pointer; }
+.password-toggle:hover { color: var(--color-accent-hover); }
+.auth-form-error { margin-bottom: .9rem; padding: .75rem .85rem; color: var(--color-danger); background: var(--color-danger-soft); border: 1px solid color-mix(in srgb, var(--color-danger) 20%, var(--color-line)); border-radius: var(--radius-sm); font-size: .83rem; }
+.auth-success { padding: 1rem; background: var(--color-success-soft); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.auth-success > span { width: 36px; height: 36px; display: grid; place-items: center; margin-bottom: .8rem; color: var(--color-success); background: var(--color-surface); border-radius: 50%; }
+.auth-success h2 { margin: 0 0 .5rem; font: 500 1.5rem var(--font-display); }
+.auth-success p { margin: 0 0 .9rem; color: var(--color-muted); font-size: .85rem; }
+.auth-success strong { color: var(--color-ink); }
+.auth-button-link { display: inline-flex; justify-content: center; padding: .7rem 1rem; color: var(--color-white); background: var(--color-accent); border-radius: var(--radius-sm); font-size: .85rem; font-weight: 600; text-decoration: none; }
+.auth-submit { width: 100%; min-height: 49px; display: inline-flex; align-items: center; justify-content: center; gap: .6rem; margin-top: .35rem; padding: .75rem 1rem; color: var(--color-white); background: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius-sm); font: 600 .9rem var(--font-body); cursor: pointer; transition: background var(--motion-fast), transform var(--motion-fast); }
+.auth-submit:hover:not(:disabled) { background: var(--color-accent-hover); transform: translateY(-1px); }
+.auth-submit:disabled { opacity: .7; cursor: wait; }
+.auth-spinner { width: 16px; height: 16px; border: 2px solid color-mix(in srgb, var(--color-white) 45%, transparent); border-top-color: var(--color-white); border-radius: 50%; animation: auth-spin 700ms linear infinite; }
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+.auth-inline-link { color: var(--color-accent); font-size: .8rem; font-weight: 600; text-decoration: none; }
+.auth-inline-link:hover { text-decoration: underline; }
+.auth-forgot-row { display: flex; justify-content: end; margin-top: -.55rem; }
+.auth-form-footnote { margin: 1.4rem 0 0; color: var(--color-muted); font-size: .82rem; text-align: center; }
+.auth-back-link { width: fit-content; display: inline-flex; align-items: center; gap: .45rem; margin-top: auto; color: var(--color-muted); font-size: .78rem; text-decoration: none; }
+.auth-back-link:hover { color: var(--color-accent); }
+.auth-quote-panel { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(2rem, 5vw, 5rem); overflow: hidden; background: var(--color-accent-soft); border-left: 1px solid var(--color-line); }
+.auth-quote-panel__top { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 1rem; color: var(--color-muted); font-size: .65rem; font-weight: 700; letter-spacing: .13em; }
+.auth-quote-panel__middle { position: relative; z-index: 1; width: min(100%, 530px); align-self: center; margin-block: 3rem; }
+.auth-quote-mark { height: 5rem; color: var(--color-accent); font: 500 8rem/.9 var(--font-display); }
+.auth-quote-panel blockquote { margin: 1rem 0 1.25rem; color: var(--color-ink); font: 400 clamp(2.3rem, 4.5vw, 4.3rem)/1.08 var(--font-display); letter-spacing: -.02em; }
+.auth-quote-panel__middle > p { margin: 0; color: var(--color-muted); font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.auth-quote-panel__art { position: absolute; right: -8%; bottom: 11%; width: min(38vw, 390px); aspect-ratio: 1; border: 1px solid color-mix(in srgb, var(--color-accent) 18%, transparent); border-radius: 50%; }
+.auth-quote-panel__art::before, .auth-quote-panel__art::after { position: absolute; content: ''; border: 1px solid color-mix(in srgb, var(--color-accent) 18%, transparent); border-radius: 50%; }
+.auth-quote-panel__art::before { inset: 13%; }
+.auth-quote-panel__art::after { inset: 27%; }
+.auth-quote-panel__art > span { position: absolute; top: 50%; left: 50%; width: 7px; height: 7px; background: var(--color-accent); border-radius: 50%; }
+.auth-quote-panel__art > span:nth-child(1) { transform: translate(-50%, -50%); }
+.auth-quote-panel__art > span:nth-child(2) { transform: translate(145px, -95px); }
+.auth-quote-panel__art > span:nth-child(3) { transform: translate(-155px, 72px); }
+.auth-quote-panel__art > span:nth-child(4) { transform: translate(55px, 155px); }
+.auth-quote-panel__art > span:nth-child(5) { transform: translate(-85px, -150px); }
+.auth-panel-link { position: relative; z-index: 1; width: fit-content; display: inline-flex; align-items: center; gap: .45rem; color: var(--color-ink); font-size: .8rem; font-weight: 600; text-decoration: none; }
+.auth-panel-link:hover { color: var(--color-accent); }
+
+@media (max-width: 900px) {
+  .auth-layout { grid-template-columns: minmax(420px, 1fr) minmax(340px, .8fr); }
+  .auth-form-side { padding: 2rem; }
+  .auth-quote-panel { padding: 2.25rem; }
+  .auth-quote-panel__art { width: 34vw; }
+}
+@media (max-width: 700px) {
+  .auth-layout { min-height: 100vh; grid-template-columns: 1fr; }
+  .auth-form-side { min-height: 100vh; padding: 1.25rem; }
+  .auth-form-content { padding-block: 3rem; }
+  .auth-quote-panel { min-height: 360px; padding: 1.5rem; border-top: 1px solid var(--color-line); border-left: 0; }
+  .auth-quote-panel__top { font-size: .58rem; }
+  .auth-quote-panel__middle { margin-block: 2rem; }
+  .auth-quote-panel blockquote { max-width: 15ch; font-size: 2.5rem; }
+  .auth-quote-panel__art { width: 55vw; right: -12%; bottom: 5%; }
+}
+@media (prefers-reduced-motion: reduce) { .auth-spinner { animation-duration: 1.5s; } }

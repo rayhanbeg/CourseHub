@@ -1,238 +1,144 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { ArrowRight, Activity, BookOpen, Briefcase, Check, Download, GraduationCap, Infinity as InfinityIcon, Laptop, MonitorSmartphone, Play, User, Video } from 'lucide-react';
 import { courseAPI } from '../services/api';
-import { ArrowRight, BookOpen, Users, Zap, Award, Loader, Briefcase, Clock3, ShieldCheck } from 'lucide-react';
+import CourseCard from '../components/CourseCard';
+import HomeHero from '../components/HomeHero';
+import { CountUp, motionTokens, Reveal, RevealGroup, m, useReducedMotion } from '../lib/motion';
+import './publicPages.css';
+import './homeSections.css';
+import '../components/homeHero.css';
 
-const valuePoints = [
-  {
-    icon: BookOpen,
-    title: 'Expert Content',
-    description: 'Structured lessons built by experienced professionals with practical examples.',
-  },
-  {
-    icon: Zap,
-    title: 'Flexible Learning',
-    description: 'Study at your own pace with lessons optimized for short, consistent sessions.',
-  },
-  {
-    icon: Award,
-    title: 'Career Ready',
-    description: 'Build proven skills and complete courses with confidence and measurable progress.',
-  },
-  {
-    icon: Users,
-    title: 'Trusted Community',
-    description: 'Join a growing network of learners focused on meaningful skill development.',
-  },
+const howSteps = [
+  { number: 1, title: 'Choose a direction', text: 'Browse focused courses and find a subject that fits where you want to go.' },
+  { number: 2, title: 'Learn at your pace', text: 'Follow concise lessons, revisit ideas, and make progress on your own schedule.' },
+  { number: 3, title: 'Put it into practice', text: 'Build confidence by applying what you learn and tracking your progress.' },
+];
+const outcomes = [
+  'Build practical skills you can use in real projects.',
+  'Learn complex subjects through clear, organized lessons.',
+  'Stay on track with visible progress and a manageable pace.',
+  'Keep learning wherever your schedule takes you.',
+];
+const faqItems = [
+  { question: 'How do the courses work?', answer: 'Each course is organized into sections and video lessons. Enroll in a course to follow its curriculum and keep track of your progress.' },
+  { question: 'Can I learn at my own pace?', answer: 'Yes. Lessons are available on demand, so you can study when it works for you and return to the material as needed.' },
+  { question: 'Can I preview a course before enrolling?', answer: 'Courses may include free preview lessons. Look for the Preview label in a course curriculum to play one without enrolling.' },
+  { question: 'How do I access a course after enrollment?', answer: 'Your enrolled courses appear in your student dashboard, where you can continue learning and track completed lessons.' },
+];
+const includedItems = [
+  { title: 'HD video lessons', description: 'Clear, focused lessons you can watch at your own pace.', Icon: Video, variant: 'wide' },
+  { title: 'Downloadable resources', description: 'Keep useful references and files close as you practice.', Icon: Download, variant: 'small' },
+  { title: 'Progress tracking', description: 'See how far you have come in every course.', Icon: Activity, variant: 'small' },
+  { title: 'Lifetime access', description: 'Revisit lessons whenever you need a refresher.', Icon: InfinityIcon, variant: 'small' },
+  { title: 'Learn on any device', description: 'Pick up your learning on a phone, tablet, or computer.', Icon: MonitorSmartphone, variant: 'wide' },
+];
+const audienceItems = [
+  { title: 'Beginners', description: 'Start from the basics and build confidence one idea at a time.', outcomes: ['Clear foundations', 'A steady learning pace'], Icon: User },
+  { title: 'Career switchers', description: 'Build job-ready skills step by step, with practice along the way.', outcomes: ['Practical projects', 'Skills you can grow'], Icon: Briefcase },
+  { title: 'Students', description: 'Support your studies with practical projects and focused lessons.', outcomes: ['Applied learning', 'Flexible study time'], Icon: GraduationCap },
+];
+const pathSteps = [
+  { title: 'Fundamentals', level: 'beginner', match: /fundamental|beginner|intro|basics/ },
+  { title: 'Build real projects', match: /project|portfolio|practical/ },
+  { title: 'Go deeper', level: 'advanced', match: /advanced|deep|master/ },
+  { title: 'Show your skills', level: 'advanced', match: /career|professional|portfolio|capstone/ },
 ];
 
+const fetchCourses = async () => {
+  const first = await courseAPI.getAllCourses({ page: 1, limit: 100 });
+  const payload = first.data?.courses ? first.data : first.data?.data || {};
+  const pages = Number(payload.pages) || 1;
+  const remaining = await Promise.all(Array.from({ length: Math.max(0, pages - 1) }, (_, index) => courseAPI.getAllCourses({ page: index + 2, limit: 100 })));
+  return { courses: [...(payload.courses || []), ...remaining.flatMap((result) => result.data?.courses || result.data?.data?.courses || [])], total: Number(payload.total) || 0 };
+};
+
 const Home = () => {
-  const auth = useAuth();
-  const [popularCourses, setPopularCourses] = useState([]);
-  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [courses, setCourses] = useState([]);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
-    const fetchPopularCourses = async () => {
-      try {
-        const { data } = await courseAPI.getAllCourses({ limit: 8 });
-        setPopularCourses(data.courses || []);
-      } catch (error) {
-        setPopularCourses([]);
-      } finally {
-        setLoadingCourses(false);
-      }
-    };
-
-    fetchPopularCourses();
+    let active = true;
+    fetchCourses().then((data) => { if (active) { setCourses(data.courses); setTotalCourses(data.total); } })
+      .catch(() => { if (active) { setCourses([]); setTotalCourses(0); } })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
-  const topCourses = useMemo(
-    () => [...popularCourses].sort((a, b) => (b.enrollmentCount || 0) - (a.enrollmentCount || 0)).slice(0, 6),
-    [popularCourses]
-  );
+  const featuredCourses = useMemo(() => [...courses].sort((a, b) => (Number(b.enrollmentCount) || 0) - (Number(a.enrollmentCount) || 0)).slice(0, 3), [courses]);
+  const categories = [...new Set(courses.map((course) => course.category).filter(Boolean))];
+  const totalLearners = courses.reduce((sum, course) => sum + (Number(course.enrollmentCount) || 0), 0);
+  const totalLessons = courses.reduce((sum, course) => sum + (course.modules || []).reduce((moduleTotal, module) => moduleTotal + (module.lessons?.length || 0), 0), 0);
+  const visibleStats = [
+    { value: totalCourses, label: 'Published courses' },
+    { value: totalLessons, label: 'Lessons to explore' },
+    { value: totalLearners, label: 'Learners enrolled' },
+  ].filter((item) => item.value >= 5);
+  const previewCourse = featuredCourses[0];
+  const timelineCourses = pathSteps.map((step) => courses.find((course) => {
+    const level = String(course.level || '').toLowerCase();
+    const searchable = `${course.title || ''} ${course.category || ''} ${course.shortDescription || ''} ${course.description || ''}`.toLowerCase();
+    return step.level ? level.includes(step.level) : step.match.test(searchable);
+  }));
 
-  const stats = useMemo(() => {
-    const learnerCount = popularCourses.reduce((acc, course) => acc + (course.enrollmentCount || 0), 0);
-    const categoryCount = new Set(popularCourses.map((course) => course.category).filter(Boolean)).size;
-    return {
-      courses: popularCourses.length,
-      learners: learnerCount,
-      categories: categoryCount,
-    };
-  }, [popularCourses]);
+  return <div className="public-home">
+    <HomeHero stats={visibleStats} previewCourse={previewCourse} />
 
-  const featuredTracks = useMemo(() => {
-    const grouped = popularCourses.reduce((acc, course) => {
-      const key = course.category || 'General';
-      acc[key] = acc[key] || [];
-      acc[key].push(course);
-      return acc;
-    }, {});
+    <section className="public-section public-section--featured home-courses" aria-labelledby="featured-heading">
+      <div className="public-container">
+        <Reveal as="div" className="public-section__heading"><div><p className="eyebrow">The course collection</p><h2 id="featured-heading">Start with a subject<br className="desktop-only" /> that moves you.</h2></div><Link to="/courses" className="text-link">Browse all courses <ArrowRight size={16} /></Link></Reveal>
+        {loading ? <div className="public-course-grid">{[1, 2, 3].map((item) => <div className="public-skeleton-card" key={item}><span /><i /><i /><i /></div>)}</div> : featuredCourses.length ? <RevealGroup className="public-course-grid">{featuredCourses.map((course) => <CourseCard key={course._id} course={course} />)}</RevealGroup> : <div className="public-empty"><BookOpen size={22} /><p>New courses are on their way.</p><Link to="/courses" className="text-link">Explore the catalog <ArrowRight size={16} /></Link></div>}
+      </div>
+    </section>
 
-    return Object.entries(grouped)
-      .slice(0, 3)
-      .map(([name, courses]) => ({
-        name,
-        count: courses.length,
-        avgLevel: courses[0]?.level || 'Beginner',
-      }));
-  }, [popularCourses]);
+    {!!categories.length && <section className="home-categories" aria-label="Course categories"><div className="public-container"><Reveal as="nav" className="home-category-list" aria-label="Browse course categories">{categories.map((category) => <Link key={category} to={`/courses?category=${encodeURIComponent(category)}`}>{category}<ArrowRight size={14} /></Link>)}</Reveal></div></section>}
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <section className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20 grid lg:grid-cols-2 gap-10 items-center">
-          <div>
-            <p className="text-sm font-medium text-primary mb-3">Professional Online Learning</p>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 mb-4 text-balance">
-              Build practical skills with modern, focused courses.
-            </h1>
-            <p className="text-base text-slate-600 max-w-2xl mb-8 text-balance">
-              CourseHub provides high-quality, career-focused learning experiences with a clean interface and a structured learning path.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/courses" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-white hover:bg-secondary font-semibold">
-                Explore Courses <ArrowRight className="w-4 h-4" />
-              </Link>
-              {!auth.isAuthenticated && (
-                <Link to="/register" className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold">
-                  Create Free Account
-                </Link>
-              )}
-            </div>
+    <section className="public-section home-platform" aria-labelledby="platform-heading">
+      <div className="public-container home-platform__layout">
+        <Reveal className="home-platform__intro"><p className="eyebrow">Inside the platform</p><h2 id="platform-heading">A calm place to <em>keep learning.</em></h2><ul className="home-check-list">{outcomes.map((outcome) => <li key={outcome}><Check size={16} aria-hidden="true" />{outcome}</li>)}</ul></Reveal>
+        <Reveal className="platform-browser" delay={0.06} aria-hidden="true">
+          <div className="platform-browser__bar"><span /><span /><span /><i>CourseHub / My course</i></div>
+          <div className="platform-browser__content"><div className="platform-browser__lesson"><div className="platform-browser__video"><Play size={23} fill="currentColor" /></div><div className="platform-browser__progress"><span /></div><span className="platform-browser__tiny">LESSON 04 · 68% COMPLETE</span><strong>Building a steady practice</strong><small>Take one clear idea and put it to work.</small></div>
+            <aside className="platform-browser__curriculum"><strong>Course outline</strong><small>Foundations</small><span><Check size={12} />Getting started</span><span><Check size={12} />Core ideas</span><small>Practice</small><span className="is-current"><Play size={11} />Build a habit</span><span>Reflection</span><small>Keep growing</small><span>Next steps</span></aside>
           </div>
+        </Reveal>
+      </div>
+    </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { label: 'Published Courses', value: stats.courses || 0, icon: BookOpen },
-              { label: 'Total Learners', value: stats.learners || 0, icon: Users },
-              { label: 'Top Categories', value: stats.categories || 0, icon: Briefcase },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl bg-slate-100 border border-slate-200 p-5">
-                <item.icon className="w-5 h-5 text-primary mb-3" />
-                <p className="text-2xl font-bold text-slate-900">{item.value}</p>
-                <p className="text-sm text-slate-600">{item.label}</p>
-              </div>
-            ))}
-          </div>
+    <section className="public-section home-how" id="how-it-works" aria-labelledby="how-heading">
+      <div className="public-container"><Reveal className="narrow-heading"><p className="eyebrow">A simple way forward</p><h2 id="how-heading">Good learning has<br /><em>a rhythm.</em></h2><p>Make progress one focused session at a time.</p></Reveal>
+        <RevealGroup className="steps-grid">{howSteps.map((step) => <article className="step-card" key={step.number}><span><CountUp value={step.number} format={(value) => `0${value}`} /></span><h3>{step.title}</h3><p>{step.text}</p></article>)}</RevealGroup>
+      </div>
+    </section>
+
+    <section className="public-section home-included" aria-labelledby="included-heading">
+      <div className="public-container"><Reveal className="home-section-heading"><p className="eyebrow">Thoughtfully equipped</p><h2 id="included-heading">Everything you need, <em>in every course.</em></h2></Reveal>
+        <RevealGroup className="home-bento">{includedItems.map(({ title, description, Icon, variant }) => <article className={`home-bento__card home-bento__card--${variant}`} key={title}><Icon size={20} strokeWidth={1.7} aria-hidden="true" /><h3>{title}</h3><p>{description}</p>{title === 'Progress tracking' && <div className="home-bento__progress" aria-hidden="true"><m.span initial={{ scaleX: 0 }} whileInView={{ scaleX: 0.68 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: reduced ? 0.01 : motionTokens.durations.slow, ease: motionTokens.easings.emphasized }} /></div>}{title === 'HD video lessons' && <div className="home-bento__video" aria-hidden="true"><Play size={15} /></div>}{title === 'Downloadable resources' && <div className="home-bento__resource" aria-hidden="true"><span /><span /><span /></div>}{title === 'Lifetime access' && <div className="home-bento__infinity" aria-hidden="true">∞</div>}{title === 'Learn on any device' && <div className="home-bento__devices" aria-hidden="true"><Laptop size={26} /><MonitorSmartphone size={21} /></div>}</article>)}</RevealGroup>
+      </div>
+    </section>
+
+    <section className="public-section home-audience" aria-labelledby="audience-heading">
+      <div className="public-container"><Reveal className="home-section-heading"><p className="eyebrow">Room for every next step</p><h2 id="audience-heading">Made for <em>how you learn.</em></h2></Reveal>
+        <RevealGroup className="home-audience__grid">{audienceItems.map(({ title, description, outcomes: audienceOutcomes, Icon }) => <article className="home-audience__card" key={title}><Icon size={21} strokeWidth={1.7} aria-hidden="true" /><h3>{title}</h3><p>{description}</p><ul>{audienceOutcomes.map((outcome) => <li key={outcome}><Check size={14} />{outcome}</li>)}</ul><Link to="/courses" className="text-link">Explore courses <ArrowRight size={15} /></Link></article>)}</RevealGroup>
+      </div>
+    </section>
+
+    <section className="public-section home-path" aria-labelledby="path-heading">
+      <div className="public-container"><Reveal className="home-section-heading"><p className="eyebrow">Your next steps</p><h2 id="path-heading">A clear path, <em>step by step.</em></h2></Reveal>
+        <div className="home-path__timeline"><m.span className="home-path__line home-path__line--desktop" aria-hidden="true" initial={reduced ? { scaleX: 1 } : { scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: reduced ? 0.01 : motionTokens.durations.slow, ease: motionTokens.easings.standard }} /><m.span className="home-path__line home-path__line--mobile" aria-hidden="true" initial={reduced ? { scaleY: 1 } : { scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: reduced ? 0.01 : motionTokens.durations.slow, ease: motionTokens.easings.standard }} />
+          <RevealGroup className="home-path__steps">{pathSteps.map((step, index) => { const course = timelineCourses[index]; return <article className="home-path__step" key={step.title}><span className="home-path__node" aria-hidden="true" /><p className="home-path__index">0{index + 1}</p><h3>{step.title}</h3>{course ? <Link to={`/courses/${course._id}`} className="home-path__course">{course.title}<ArrowRight size={14} /></Link> : <span className="home-path__soon">Coming soon</span>}</article>; })}</RevealGroup>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 text-center mb-10">Why learners choose CourseHub</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {valuePoints.map((point) => (
-            <div key={point.title} className="bg-white rounded-xl border border-slate-200 p-5">
-              <point.icon className="w-5 h-5 text-primary mb-3" />
-              <h3 className="font-semibold text-slate-900 mb-2">{point.title}</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{point.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+    <section className="public-section faq-section" id="faq" aria-labelledby="faq-heading">
+      <Reveal className="public-container faq-layout"><div><p className="eyebrow">A few useful details</p><h2 id="faq-heading">Questions,<br /><em>answered.</em></h2></div><div className="faq-list">{faqItems.map((item) => <details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div></Reveal>
+    </section>
 
-      <section className="bg-white border-y border-slate-200 py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900">Popular Courses</h2>
-            <Link to="/courses" className="text-sm font-semibold text-primary hover:text-secondary">View all courses →</Link>
-          </div>
-
-          {loadingCourses ? (
-            <div className="py-10 flex justify-center"><Loader className="w-8 h-8 animate-spin text-primary" /></div>
-          ) : topCourses.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-              Courses will appear here after publication.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {topCourses.map((course) => (
-                <article key={course._id} className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                  <img
-                    src={course.thumbnail}
-                    alt={course.title}
-                    className="h-44 w-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&q=80';
-                    }}
-                  />
-                  <div className="p-5">
-                    <p className="text-xs uppercase tracking-wide text-primary font-semibold mb-2">{course.category}</p>
-                    <h3 className="font-semibold text-slate-900 text-lg mb-2 line-clamp-2">{course.title}</h3>
-                    <div className="flex justify-between items-center text-sm text-slate-600 mb-4">
-                      <span>{course.enrollmentCount || 0} students</span>
-                      <span>{course.level}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold text-primary">${course.price}</span>
-                      <Link to={`/courses/${course._id}`} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-secondary">
-                        View Course
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h3 className="text-xl font-semibold text-slate-900 mb-4">Learning paths by category</h3>
-            <div className="space-y-3">
-              {featuredTracks.length === 0 ? (
-                <p className="text-sm text-slate-500">New categories will appear as soon as courses are available.</p>
-              ) : (
-                featuredTracks.map((track) => (
-                  <div key={track.name} className="flex items-center justify-between rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
-                    <div>
-                      <p className="font-medium text-slate-900">{track.name}</p>
-                      <p className="text-xs text-slate-600">{track.count} courses · {track.avgLevel}</p>
-                    </div>
-                    <Link to="/courses" className="text-sm font-semibold text-primary">Explore</Link>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h3 className="text-xl font-semibold text-slate-900 mb-4">How CourseHub supports consistency</h3>
-            <div className="space-y-4">
-              {[
-                { icon: Clock3, title: 'Focused lesson duration', text: 'Most lessons are structured for quick, meaningful progress in less time.' },
-                { icon: ShieldCheck, title: 'Reliable course structure', text: 'A clear module-based format helps learners stay organized and reduce overwhelm.' },
-                { icon: Award, title: 'Progress visibility', text: 'Track completion and maintain momentum with a clear dashboard and milestones.' },
-              ].map((item) => (
-                <div key={item.title} className="flex items-start gap-3">
-                  <item.icon className="w-5 h-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="font-medium text-slate-900">{item.title}</p>
-                    <p className="text-sm text-slate-600">{item.text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {!auth.isAuthenticated && (
-        <section className="bg-slate-900 text-white py-14">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-            <h3 className="text-2xl sm:text-3xl font-semibold mb-3">Ready to start learning professionally?</h3>
-            <p className="text-slate-300 mb-7">Create your account and begin with courses aligned to your goals.</p>
-            <Link to="/register" className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-white text-slate-900 font-semibold hover:bg-slate-100">
-              Get Started
-            </Link>
-          </div>
-        </section>
-      )}
-    </div>
-  );
+    <section className="public-final-cta"><div className="public-container public-final-cta__inner"><div><p className="eyebrow">Your next chapter starts here</p><h2>Find your next<br /><em>good question.</em></h2></div><div><p>Explore a course, learn a new skill, and see where it takes you.</p><Link to="/courses" className="public-button public-button--primary">Find a course <ArrowRight size={17} /></Link></div></div></section>
+  </div>;
 };
 
 export default Home;

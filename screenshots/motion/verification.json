@@ -1,0 +1,468 @@
+[
+  {
+    "label": "Home",
+    "width": 1440,
+    "viewport": 1440,
+    "document": 1440,
+    "cls": 0.0017355247214988424,
+    "shifts": [
+      {
+        "value": 0.0017355247214988424,
+        "sources": [
+          {
+            "selector": "home-hero__details ",
+            "previous": {
+              "x": 958,
+              "y": 349.71875,
+              "width": 320,
+              "height": 212.5625,
+              "top": 349.71875,
+              "right": 1278,
+              "bottom": 562.28125,
+              "left": 958
+            },
+            "current": {
+              "x": 958,
+              "y": 331.125,
+              "width": 320,
+              "height": 249.75,
+              "top": 331.125,
+              "right": 1278,
+              "bottom": 580.875,
+              "left": 958
+            }
+          },
+          {
+            "previous": {
+              "x": 120,
+              "y": 316,
+              "width": 362,
+              "height": 137,
+              "top": 316,
+              "right": 482,
+              "bottom": 453,
+              "left": 120
+            },
+            "current": {
+              "x": 120,
+              "y": 313,
+              "width": 362,
+              "height": 137,
+              "top": 313,
+              "right": 482,
+              "bottom": 450,
+              "left": 120
+            }
+          },
+          {
+            "previous": {
+              "x": 120,
+              "y": 379,
+              "width": 362,
+              "height": 137,
+              "top": 379,
+              "right": 482,
+              "bottom": 516,
+              "left": 120
+            },
+            "current": {
+              "x": 120,
+              "y": 376,
+              "width": 362,
+              "height": 137,
+              "top": 376,
+              "right": 482,
+              "bottom": 513,
+              "left": 120
+            }
+          },
+          {
+            "selector": "public-navbar__account",
+            "previous": {
+              "x": 832.171875,
+              "y": 10,
+              "width": 487.828125,
+              "height": 44,
+              "top": 10,
+              "right": 1320,
+              "bottom": 54,
+              "left": 832.171875
+            },
+            "current": {
+              "x": 835.21875,
+              "y": 10,
+              "width": 484.78125,
+              "height": 44,
+              "top": 10,
+              "right": 1320,
+              "bottom": 54,
+              "left": 835.21875
+            }
+          },
+          {
+            "selector": "public-navbar__links",
+            "previous": {
+              "x": 623.8125,
+              "y": 10,
+              "width": 192.359375,
+              "height": 44,
+              "top": 10,
+              "right": 816.171875,
+              "bottom": 54,
+              "left": 623.8125
+            },
+            "current": {
+              "x": 620.765625,
+              "y": 10,
+              "width": 198.453125,
+              "height": 44,
+              "top": 10,
+              "right": 819.21875,
+              "bottom": 54,
+              "left": 620.765625
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Courses",
+    "width": 1440,
+    "viewport": 1440,
+    "document": 1440,
+    "cls": 0.008931720709153164,
+    "shifts": [
+      {
+        "value": 0.0017355247214988424,
+        "sources": [
+          {
+            "selector": "home-hero__details ",
+            "previous": {
+              "x": 958,
+              "y": 349.71875,
+              "width": 320,
+              "height": 212.5625,
+              "top": 349.71875,
+              "right": 1278,
+              "bottom": 562.28125,
+              "left": 958
+            },
+            "current": {
+              "x": 958,
+              "y": 331.125,
+              "width": 320,
+              "height": 249.75,
+              "top": 331.125,
+              "right": 1278,
+              "bottom": 580.875,
+              "left": 958
+            }
+          },
+          {
+            "previous": {
+              "x": 120,
+              "y": 316,
+              "width": 362,
+              "height": 137,
+              "top": 316,
+              "right": 482,
+              "bottom": 453,
+              "left": 120
+            },
+            "current": {
+              "x": 120,
+              "y": 313,
+              "width": 362,
+              "height": 137,
+              "top": 313,
+              "right": 482,
+              "bottom": 450,
+              "left": 120
+            }
+          },
+          {
+            "previous": {
+              "x": 120,
+              "y": 379,
+              "width": 362,
+              "height": 137,
+              "top": 379,
+              "right": 482,
+              "bottom": 516,
+              "left": 120
+            },
+            "current": {
+              "x": 120,
+              "y": 376,
+              "width": 362,
+              "height": 137,
+              "top": 376,
+              "right": 482,
+              "bottom": 513,
+              "left": 120
+            }
+          },
+          {
+            "selector": "public-navbar__account",
+            "previous": {
+              "x": 832.171875,
+              "y": 10,
+              "width": 487.828125,
+              "height": 44,
+              "top": 10,
+              "right": 1320,
+              "bottom": 54,
+              "left": 832.171875
+            },
+            "current": {
+              "x": 835.21875,
+              "y": 10,
+              "width": 484.78125,
+              "height": 44,
+              "top": 10,
+              "right": 1320,
+              "bottom": 54,
+              "left": 835.21875
+            }
+          },
+          {
+            "selector": "public-navbar__links",
+            "previous": {
+              "x": 623.8125,
+              "y": 10,
+              "width": 192.359375,
+              "height": 44,
+              "top": 10,
+              "right": 816.171875,
+              "bottom": 54,
+              "left": 623.8125
+            },
+            "current": {
+              "x": 620.765625,
+              "y": 10,
+              "width": 198.453125,
+              "height": 44,
+              "top": 10,
+              "right": 819.21875,
+              "bottom": 54,
+              "left": 620.765625
+            }
+          }
+        ]
+      },
+      {
+        "value": 0.007196195987654321,
+        "sources": [
+          {
+            "selector": "ui-empty ",
+            "previous": {
+              "x": 377,
+              "y": 289.49237060546875,
+              "width": 943,
+              "height": 297.984375,
+              "top": 289.49237060546875,
+              "right": 1320,
+              "bottom": 587.4767456054688,
+              "left": 377
+            },
+            "current": {
+              "x": 377,
+              "y": 335.49237060546875,
+              "width": 943,
+              "height": 297.984375,
+              "top": 335.49237060546875,
+              "right": 1320,
+              "bottom": 633.4767456054688,
+              "left": 377
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Home scroll",
+    "width": 1440,
+    "viewport": 1440,
+    "document": 1440,
+    "cls": 0.008931720709153164,
+    "shifts": [
+      {
+        "value": 0.0017355247214988424,
+        "sources": [
+          {
+            "selector": "home-hero__details ",
+            "previous": {
+              "x": 958,
+              "y": 349.71875,
+              "width": 320,
+              "height": 212.5625,
+              "top": 349.71875,
+              "right": 1278,
+              "bottom": 562.28125,
+              "left": 958
+            },
+            "current": {
+              "x": 958,
+              "y": 331.125,
+              "width": 320,
+              "height": 249.75,
+              "top": 331.125,
+              "right": 1278,
+              "bottom": 580.875,
+              "left": 958
+            }
+          },
+          {
+            "previous": {
+              "x": 120,
+              "y": 316,
+              "width": 362,
+              "height": 137,
+              "top": 316,
+              "right": 482,
+              "bottom": 453,
+              "left": 120
+            },
+            "current": {
+              "x": 120,
+              "y": 313,
+              "width": 362,
+              "height": 137,
+              "top": 313,
+              "right": 482,
+              "bottom": 450,
+              "left": 120
+            }
+          },
+          {
+            "previous": {
+              "x": 120,
+              "y": 379,
+              "width": 362,
+              "height": 137,
+              "top": 379,
+              "right": 482,
+              "bottom": 516,
+              "left": 120
+            },
+            "current": {
+              "x": 120,
+              "y": 376,
+              "width": 362,
+              "height": 137,
+              "top": 376,
+              "right": 482,
+              "bottom": 513,
+              "left": 120
+            }
+          },
+          {
+            "selector": "public-navbar__account",
+            "previous": {
+              "x": 832.171875,
+              "y": 10,
+              "width": 487.828125,
+              "height": 44,
+              "top": 10,
+              "right": 1320,
+              "bottom": 54,
+              "left": 832.171875
+            },
+            "current": {
+              "x": 835.21875,
+              "y": 10,
+              "width": 484.78125,
+              "height": 44,
+              "top": 10,
+              "right": 1320,
+              "bottom": 54,
+              "left": 835.21875
+            }
+          },
+          {
+            "selector": "public-navbar__links",
+            "previous": {
+              "x": 623.8125,
+              "y": 10,
+              "width": 192.359375,
+              "height": 44,
+              "top": 10,
+              "right": 816.171875,
+              "bottom": 54,
+              "left": 623.8125
+            },
+            "current": {
+              "x": 620.765625,
+              "y": 10,
+              "width": 198.453125,
+              "height": 44,
+              "top": 10,
+              "right": 819.21875,
+              "bottom": 54,
+              "left": 620.765625
+            }
+          }
+        ]
+      },
+      {
+        "value": 0.007196195987654321,
+        "sources": [
+          {
+            "selector": "ui-empty ",
+            "previous": {
+              "x": 377,
+              "y": 289.49237060546875,
+              "width": 943,
+              "height": 297.984375,
+              "top": 289.49237060546875,
+              "right": 1320,
+              "bottom": 587.4767456054688,
+              "left": 377
+            },
+            "current": {
+              "x": 377,
+              "y": 335.49237060546875,
+              "width": 943,
+              "height": 297.984375,
+              "top": 335.49237060546875,
+              "right": 1320,
+              "bottom": 633.4767456054688,
+              "left": 377
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Reduced motion",
+    "runningAnimations": 0,
+    "visibleHeading": true
+  },
+  {
+    "label": "Home",
+    "width": 390,
+    "viewport": 390,
+    "document": 390,
+    "cls": 0,
+    "shifts": []
+  },
+  {
+    "label": "Login validation",
+    "width": 390,
+    "viewport": 390,
+    "document": 390,
+    "cls": 0,
+    "shifts": []
+  },
+  {
+    "label": "My learning",
+    "skipped": "page.waitForURL: Timeout 8000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+  },
+  {
+    "label": "Admin dashboard",
+    "skipped": "page.waitForURL: Timeout 8000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+  }
+]

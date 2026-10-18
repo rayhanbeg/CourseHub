@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUser, logout, setLoading } from '../store/authSlice';
+import { setUser, logout } from '../store/authSlice';
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
@@ -10,22 +10,15 @@ export const AuthProvider = ({ children }) => {
   const auth = useSelector((state) => state.auth);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      if (auth.token && !auth.user) {
-        dispatch(setLoading(true));
-        try {
-          const { data } = await authAPI.getCurrentUser();
-          dispatch(setUser(data.user));
-        } catch (error) {
-          dispatch(logout());
-        } finally {
-          dispatch(setLoading(false));
-        }
-      }
-    };
-
-    checkAuth();
-  }, [auth.token, auth.user, dispatch]);
+    // The minimal cached profile is written at login. Guests without it can
+    // render immediately; cached sessions stay in a loading state until /me settles.
+    if (!auth.isLoading || !auth.user) return undefined;
+    let mounted = true;
+    authAPI.getCurrentUser()
+      .then(({ data }) => { if (mounted) dispatch(setUser(data.user)); })
+      .catch(() => { if (mounted) dispatch(logout()); });
+    return () => { mounted = false; };
+  }, [dispatch]);
 
   return (
     <AuthContext.Provider value={auth}>

@@ -6,7 +6,7 @@ import { uploadImageBuffer, uploadVideoBuffer } from '../utils/cloudinary.js';
 // Get All Courses
 export const getAllCourses = async (req, res, next) => {
   try {
-    const { category, level, page = 1, limit = 10 } = req.query;
+    const { category, level, page = 1, limit = 12, sort = 'newest' } = req.query;
 
     let filter = { isPublished: true };
 
@@ -15,11 +15,13 @@ export const getAllCourses = async (req, res, next) => {
 
     const skip = (page - 1) * limit;
 
+    const sortBy = sort === 'popular' ? { enrollmentCount: -1, createdAt: -1 } : sort === 'price' ? { price: 1, createdAt: -1 } : { createdAt: -1 };
     const courses = await Course.find(filter)
       .populate('instructor', 'name profileImage')
+      .populate({ path: 'modules', select: 'lessons', populate: { path: 'lessons', select: 'videoDuration' } })
       .limit(parseInt(limit))
       .skip(skip)
-      .sort({ createdAt: -1 });
+      .sort(sortBy);
 
     const total = await Course.countDocuments(filter);
 
@@ -42,14 +44,29 @@ export const getCourseById = async (req, res, next) => {
       .populate('instructor', 'name profileImage bio')
       .populate({
         path: 'modules',
+        options: { sort: { sequenceNumber: 1 } },
         populate: {
           path: 'lessons',
+          options: { sort: { sequenceNumber: 1 } },
         },
       });
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
+
+    const hasCourseAccess = req.user?.role === 'admin' || req.user?._id?.toString() === course.instructor?._id?.toString() || req.user?.enrolledCourses?.some(
+      (enrollment) => enrollment.courseId?.toString() === course._id.toString()
+    );
+    course.modules.forEach((module) => module?.lessons?.forEach((lesson) => {
+      if (!lesson) return;
+      const hasVideo = Boolean(lesson.videoPublicId || lesson.videoUrl);
+      const allowed = hasCourseAccess || (course.isPublished && lesson.isPreview);
+      lesson.videoUrl = '';
+      lesson.videoPublicId = undefined;
+      lesson.set('hasVideo', hasVideo, { strict: false });
+      lesson.set('locked', !allowed, { strict: false });
+    }));
 
     res.status(200).json({
       success: true,
@@ -71,7 +88,9 @@ export const createCourse = async (req, res, next) => {
 
     const course = new Course({
       ...value,
-      thumbnail: value.thumbnail?.trim() || 'https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=1200&q=80',
+      description: value.fullDescription || value.description,
+      fullDescription: value.fullDescription || value.description,
+      thumbnail: value.thumbnail?.trim() || '',
       instructor: req.user._id,
     });
 
@@ -96,7 +115,34 @@ export const updateCourse = async (req, res, next) => {
       return res.status(400).json({ errors });
     }
 
-    const course = await Course.findByIdAndUpdate(req.params.id, value, {
+    const update = { ...value };
+    if (value.fullDescription !== undefined) update.description = value.fullDescription;
+    else if (value.description !== undefined) {
+      const legacyParts = value.description.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+      if (value.shortDescription === undefined && legacyParts.length > 1) {
+        update.shortDescription = legacyParts[0];
+        update.fullDescription = legacyParts.slice(1).join('\n\n');
+        update.description = update.fullDescription;
+      } else {
+        update.fullDescription = value.description;
+      }
+    }
+    if (value.isPublished === true) {
+      const current = await Course.findById(req.params.id).select('thumbnail price');
+      if (!current) return res.status(404).json({ message: 'Course not found' });
+      const thumbnail = value.thumbnail !== undefined ? value.thumbnail : current.thumbnail;
+      const price = value.price !== undefined ? value.price : current.price;
+      const modules = await Module.find({ course: req.params.id }).select('_id lessons');
+      const lessonCount = modules.reduce((total, module) => total + module.lessons.length, 0);
+      const issues = [];
+      if (!thumbnail?.trim()) issues.push('Add a course thumbnail');
+      if (modules.length < 1) issues.push('Add at least one section');
+      if (lessonCount < 1) issues.push('Add at least one lesson');
+      if (modules.some((module) => module.lessons.length === 0)) issues.push('Every section needs at least one lesson');
+      if (price === undefined || price === null || Number(price) < 0) issues.push('Set a valid course price');
+      if (issues.length) return res.status(400).json({ message: 'Complete the publish checklist first.', issues });
+    }
+    const course = await Course.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
     });
@@ -153,7 +199,7 @@ export const getInstructorCourses = async (req, res, next) => {
 // Search Courses
 export const searchCourses = async (req, res, next) => {
   try {
-    const { query, category, level } = req.query;
+    const { query, category, level, page = 1, limit = 20 } = req.query;
 
     let filter = { isPublished: true };
 
@@ -169,10 +215,16 @@ export const searchCourses = async (req, res, next) => {
 
     const courses = await Course.find(filter)
       .populate('instructor', 'name profileImage')
-      .limit(20);
+      .limit(parseInt(limit, 10))
+      .skip((parseInt(page, 10) - 1) * parseInt(limit, 10))
+      .sort({ createdAt: -1 });
+    const total = await Course.countDocuments(filter);
 
     res.status(200).json({
       success: true,
+      total,
+      page: parseInt(page, 10),
+      pages: Math.ceil(total / parseInt(limit, 10)),
       courses,
     });
   } catch (error) {

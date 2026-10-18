@@ -3,6 +3,18 @@ import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
 import { validationSchemas, validate } from '../utils/validation.js';
 
+const maskLessonVideos = (modules, course, user) => {
+  const enrolled = user?.role === 'admin' || user?._id?.toString() === course.instructor?.toString() || user?.enrolledCourses?.some((item) => item.courseId.toString() === course._id.toString());
+  modules.forEach((module) => (module.lessons || []).forEach((lesson) => {
+    const allowed = enrolled || (lesson.isPreview && course.isPublished);
+    const hasVideo = Boolean(lesson.videoPublicId || lesson.videoUrl);
+    lesson.videoUrl = '';
+    lesson.videoPublicId = undefined;
+    lesson.set('hasVideo', hasVideo, { strict: false });
+    lesson.set('locked', !allowed, { strict: false });
+  }));
+};
+
 // Create Module
 export const createModule = async (req, res, next) => {
   try {
@@ -48,14 +60,17 @@ export const createModule = async (req, res, next) => {
 // Get Module
 export const getModule = async (req, res, next) => {
   try {
-    const module = await Module.findById(req.params.id).populate({
+    const module = await Module.findById(req.params.id).populate('course', 'isPublished').populate({
       path: 'lessons',
       model: 'Lesson',
+      options: { sort: { sequenceNumber: 1 } },
     });
 
     if (!module) {
       return res.status(404).json({ message: 'Module not found' });
     }
+
+    maskLessonVideos([module], module.course, req.user);
 
     res.status(200).json({
       success: true,
@@ -81,10 +96,11 @@ export const updateModule = async (req, res, next) => {
     }
 
     const { title, description, sequenceNumber } = req.body;
+    if (title !== undefined && !title.trim()) return res.status(400).json({ message: 'Section title is required' });
 
-    module.title = title || module.title;
-    module.description = description || module.description;
-    module.sequenceNumber = sequenceNumber || module.sequenceNumber;
+    module.title = title ?? module.title;
+    module.description = description ?? module.description;
+    module.sequenceNumber = sequenceNumber ?? module.sequenceNumber;
 
     await module.save();
 
@@ -137,8 +153,11 @@ export const getCourseModules = async (req, res, next) => {
     const { courseId } = req.params;
 
     const modules = await Module.find({ course: courseId })
-      .populate('lessons')
+      .populate({ path: 'lessons', options: { sort: { sequenceNumber: 1 } } })
       .sort({ sequenceNumber: 1 });
+    const course = await Course.findById(courseId).select('isPublished instructor');
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+    maskLessonVideos(modules, course, req.user);
 
     res.status(200).json({
       success: true,
@@ -152,15 +171,16 @@ export const getCourseModules = async (req, res, next) => {
 // Reorder Modules
 export const reorderModules = async (req, res, next) => {
   try {
-    const { modules } = req.body;
-
-    if (!Array.isArray(modules)) {
+    const { courseId, moduleIds } = req.body;
+    if (!courseId || !Array.isArray(moduleIds) || new Set(moduleIds).size !== moduleIds.length) {
       return res.status(400).json({ message: 'Invalid module order' });
     }
-
-    for (let i = 0; i < modules.length; i++) {
-      await Module.findByIdAndUpdate(modules[i], { sequenceNumber: i + 1 });
-    }
+    const course = await Course.findById(courseId).select('instructor modules');
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') return res.status(403).json({ message: 'Not authorized to reorder sections' });
+    const actualIds = await Module.find({ course: courseId }).distinct('_id');
+    if (actualIds.length !== moduleIds.length || actualIds.some((id) => !moduleIds.includes(id.toString()))) return res.status(400).json({ message: 'Section order must include every section in this course exactly once' });
+    await Module.bulkWrite(moduleIds.map((id, index) => ({ updateOne: { filter: { _id: id, course: courseId }, update: { $set: { sequenceNumber: index + 1 } } } })));
 
     res.status(200).json({
       success: true,

@@ -1,12 +1,37 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const AUTH_CACHE_KEY = 'coursehub_user';
+
+const readCachedUser = () => {
+  try {
+    const cached = JSON.parse(localStorage.getItem(AUTH_CACHE_KEY) || 'null');
+    if (!cached || !cached.id || !cached.name || !['student', 'admin'].includes(cached.role)) return null;
+    return { id: cached.id, name: cached.name, role: cached.role };
+  } catch {
+    return null;
+  }
+};
+
+const cacheUser = (user) => {
+  try {
+    if (!user) localStorage.removeItem(AUTH_CACHE_KEY);
+    else localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify({
+      id: String(user.id || user._id || ''),
+      name: user.name || '',
+      role: user.role || '',
+    }));
+  } catch { /* Auth remains usable when browser storage is unavailable. */ }
+};
+
+const cachedUser = readCachedUser();
+
 const initialState = {
-  user: null,
-  token: localStorage.getItem('token') || null,
-  refreshToken: localStorage.getItem('refreshToken') || null,
-  isLoading: !!localStorage.getItem('token'),
+  user: cachedUser,
+  token: null,
+  refreshToken: null,
+  isLoading: Boolean(cachedUser),
   error: null,
-  isAuthenticated: !!localStorage.getItem('token'),
+  isAuthenticated: Boolean(cachedUser),
 };
 
 const authSlice = createSlice({
@@ -18,27 +43,29 @@ const authSlice = createSlice({
     },
     loginSuccess: (state, action) => {
       state.user = action.payload.user;
+      cacheUser(action.payload.user);
       state.token = action.payload.token;
       state.refreshToken = action.payload.refreshToken;
       state.isAuthenticated = true;
+      state.isLoading = false;
       state.error = null;
-      localStorage.setItem('token', action.payload.token);
-      localStorage.setItem('refreshToken', action.payload.refreshToken);
     },
     registerSuccess: (state, action) => {
       state.user = action.payload.user;
+      cacheUser(action.payload.user);
       state.token = action.payload.token;
       state.refreshToken = action.payload.refreshToken;
       state.isAuthenticated = true;
+      state.isLoading = false;
       state.error = null;
-      localStorage.setItem('token', action.payload.token);
-      localStorage.setItem('refreshToken', action.payload.refreshToken);
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
+      state.isLoading = false;
+      cacheUser(null);
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
     },
@@ -47,6 +74,9 @@ const authSlice = createSlice({
     },
     setUser: (state, action) => {
       state.user = action.payload;
+      cacheUser(action.payload);
+      state.isAuthenticated = Boolean(action.payload);
+      state.isLoading = false;
     },
   },
 });

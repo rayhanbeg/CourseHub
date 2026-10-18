@@ -22,6 +22,14 @@ const UserSchema = new mongoose.Schema(
       minlength: 6,
       select: false,
     },
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
     role: {
       type: String,
       enum: ['student', 'admin'],
@@ -39,6 +47,7 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    tokenVersion: { type: Number, default: 0, select: false },
     enrolledCourses: [
       {
         courseId: mongoose.Schema.Types.ObjectId,
@@ -53,6 +62,8 @@ const UserSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+UserSchema.index({ 'enrolledCourses.courseId': 1 });
 
 // Hash password before saving
 UserSchema.pre('save', async function (next) {

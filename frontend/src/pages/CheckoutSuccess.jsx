@@ -1,121 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { orderAPI } from '../services/api';
-import { CheckCircle, Loader, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Clock3 } from 'lucide-react';
 
 const CheckoutSuccess = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const orderId = params.get('orderId');
   const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const orderId = searchParams.get('orderId');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchOrder = async () => {
+    if (!orderId) { setError('We could not find this order. Check your order history for updates.'); return undefined; }
+    let active = true;
+    let attempts = 0;
+    let timer;
+    const checkOrder = async () => {
       try {
-        await orderAPI.confirmOrderPayment(orderId);
         const { data } = await orderAPI.getOrderById(orderId);
+        if (!active) return;
         setOrder(data.order);
-      } catch (error) {
-        console.error('Failed to fetch order', error);
-      } finally {
-        setLoading(false);
-      }
+        if (data.order.status === 'pending' && attempts++ < 9) timer = window.setTimeout(checkOrder, 2000);
+      } catch (err) { if (active) setError(err.response?.data?.message || 'Unable to check this order right now.'); }
     };
-
-    if (orderId) {
-      fetchOrder();
-    }
+    checkOrder();
+    return () => { active = false; window.clearTimeout(timer); };
   }, [orderId]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-light py-12">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-10 text-center">
-          {/* Success Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="bg-green-100 rounded-full p-6">
-              <CheckCircle className="w-16 h-16 text-accent" />
-            </div>
-          </div>
-
-          {/* Success Message */}
-          <h1 className="text-3xl sm:text-4xl font-semibold text-dark mb-2">Payment Successful!</h1>
-          <p className="text-gray-600 text-lg mb-8">
-            Thank you for your purchase. You now have access to the course.
-          </p>
-
-          {/* Order Details */}
-          {order && (
-            <div className="bg-light rounded-lg p-6 mb-8 text-left">
-              <h2 className="font-bold text-lg mb-4 text-dark">Order Details</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Order ID</span>
-                  <span className="font-semibold text-dark">{order._id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Course</span>
-                  <span className="font-semibold text-dark">{order.course.title}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Amount Paid</span>
-                  <span className="font-bold text-primary">${order.amount}</span>
-                </div>
-                <div className="flex justify-between pt-3 border-t border-gray-300">
-                  <span className="text-gray-600">Status</span>
-                  <span className="inline-block px-3 py-1 bg-green-100 text-accent rounded-full text-sm font-semibold capitalize">
-                    {order.status}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Next Steps */}
-          <div className="bg-blue-50 border-l-4 border-primary p-6 mb-8 text-left">
-            <h3 className="font-bold text-dark mb-2">What's Next?</h3>
-            <ul className="text-gray-600 space-y-2 text-sm">
-              <li>✓ Check your email for an order confirmation</li>
-              <li>✓ Access the course materials immediately</li>
-              <li>✓ Track your progress on your dashboard</li>
-              <li>✓ Download course resources anytime</li>
-            </ul>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="flex-1 px-6 py-3 bg-primary text-white rounded-lg hover:bg-secondary transition font-semibold flex items-center justify-center gap-2"
-            >
-              Go to Dashboard
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => navigate('/courses')}
-              className="flex-1 px-6 py-3 bg-light border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition font-semibold"
-            >
-              Browse More Courses
-            </button>
-          </div>
-
-          {/* Support */}
-          <p className="text-gray-600 text-sm mt-8">
-            Need help? <a href="mailto:support@courseplatform.com" className="text-primary hover:underline">Contact Support</a>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+  const completed = order?.status === 'completed';
+  return <main className="min-h-[65vh] px-4 py-16"><section className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-8 text-center sm:p-12">
+    <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-slate-50">{completed ? <CheckCircle2 className="h-7 w-7 text-primary" /> : <Clock3 className="h-7 w-7 text-primary" />}</div>
+    <h1 className="mb-3 text-3xl font-semibold text-dark">{completed ? 'You’re enrolled' : order?.status === 'failed' ? 'Payment needs attention' : 'Confirming your payment'}</h1>
+    <p className="mx-auto mb-8 max-w-lg text-gray-600">{completed ? 'Your payment is confirmed and course access is ready.' : order?.status === 'failed' ? 'Stripe could not complete this payment. You can return to the course and try again.' : 'Stripe is processing your payment. Course access appears here after our server receives confirmation.'}</p>
+    {error && <p role="alert" className="mb-6 text-sm text-red-700">{error}</p>}
+    {order && <div className="mb-8 rounded-lg border border-slate-200 p-5 text-left text-sm"><div className="flex justify-between gap-4"><span>Course</span><strong>{order.course?.title || 'Course'}</strong></div><div className="mt-3 flex justify-between gap-4"><span>Order</span><strong className="font-mono">{order._id}</strong></div><div className="mt-3 flex justify-between gap-4"><span>Total</span><strong>{order.currency} {Number(order.amount).toFixed(2)}</strong></div><div className="mt-3 flex justify-between gap-4"><span>Status</span><strong className="capitalize">{order.status}</strong></div></div>}
+    <div className="flex flex-col justify-center gap-3 sm:flex-row"><Link className="rounded-lg bg-primary px-5 py-3 font-semibold text-white" to={completed && order?.course?._id ? `/course/${order.course._id}` : '/dashboard/orders'}>{completed ? 'Start learning' : 'View order history'}</Link><Link className="rounded-lg border border-slate-300 px-5 py-3 font-semibold" to="/courses">Browse courses</Link></div>
+  </section></main>;
 };
 
 export default CheckoutSuccess;

@@ -1,252 +1,121 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { courseAPI, orderAPI } from '../services/api';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Loader, Users, BookOpen, DollarSign, TrendingUp, PlusCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ArrowDownRight, ArrowUpRight, BookOpen, CircleDollarSign, Download, GraduationCap, MoreHorizontal, Plus, Search, ShoppingBag, Users } from 'lucide-react';
+import { adminAPI, courseAPI } from '../services/api';
+import { CountUp, motionTokens, Reveal } from '../lib/motion';
 
-const formatMonth = (dateString) =>
-  new Date(dateString).toLocaleDateString('en-US', { month: 'short' });
+const ACCENT = 'var(--color-accent)';
+const STATUS_COLORS = { completed: 'var(--color-accent)', pending: 'var(--color-line-strong)', failed: 'var(--color-danger)', refunded: 'var(--color-subtle)' };
+const formatMoney = (amount, currency = 'USD') => new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 0 }).format(Number(amount || 0));
+const formatDate = (value) => value ? new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+const Skeleton = ({ className = '' }) => <div className={`admin-skeleton rounded-md ${className}`} />;
 
-const AdminDashboard = () => {
-  const auth = useAuth();
+function StatusPill({ status }) {
+  const tint = status === 'completed' || status === 'published' ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]' : status === 'failed' ? 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]' : status === 'pending' ? 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]' : 'bg-[#F1F0ED] text-[var(--color-muted)]';
+  return <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize ${tint}`}>{status}</span>;
+}
+
+function EmptyState({ title, description, action }) {
+  return <div className="px-6 py-12 text-center"><BookOpen size={22} strokeWidth={1.5} className="mx-auto mb-3 text-slate-400" /><p className="font-sans text-sm font-medium text-[var(--color-ink)]">{title}</p><p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">{description}</p>{action}</div>;
+}
+
+export default function AdminDashboard() {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const section = location.pathname.endsWith('/courses') ? 'courses' : location.pathname.endsWith('/orders') ? 'orders' : location.pathname.endsWith('/students') ? 'students' : 'overview';
+  const range = searchParams.get('range') || '30d';
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [courses, setCourses] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState({
-    totalCourses: 0,
-    totalRevenue: 0,
-    totalOrders: 0,
-    activeStudents: 0,
-  });
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [courseStatus, setCourseStatus] = useState('all');
+  const [orderStatus, setOrderStatus] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [busyId, setBusyId] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const chartAnimated = useRef({ revenue: false, status: false });
 
-  useEffect(() => {
-    const fetchAdminData = async () => {
-      try {
-        const [coursesRes, ordersRes] = await Promise.all([
-          courseAPI.getInstructorCourses(),
-          orderAPI.getAllOrders({ limit: 100 }),
-        ]);
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try { const response = await adminAPI.getDashboard(range); setData(response.data); }
+    catch (err) { setError(err.response?.data?.message || 'We could not load dashboard data. Please try again.'); }
+    finally { setLoading(false); }
+  }, [range]);
+  useEffect(() => { load(); }, [load]);
 
-        const fetchedCourses = coursesRes.data.courses || [];
-        const fetchedOrders = ordersRes.data.orders || [];
+  const courses = data?.courses || [];
+  const orders = data?.orders || [];
+  const periodOrders = data?.periodOrders || [];
+  const students = data?.students || [];
+  const visibleCourses = useMemo(() => courses.filter((course) => (courseStatus === 'all' || (courseStatus === 'published' ? course.isPublished : !course.isPublished)) && `${course.title} ${course.category || ''}`.toLowerCase().includes(search.toLowerCase())), [courses, courseStatus, search]);
+  const visibleOrders = useMemo(() => orders.filter((order) => (orderStatus === 'all' || order.status === orderStatus) && (!dateFrom || new Date(order.createdAt) >= new Date(`${dateFrom}T00:00:00`)) && (!dateTo || new Date(order.createdAt) <= new Date(`${dateTo}T23:59:59`)) && `${order.student?.name || ''} ${order.courseTitle || order.course?.title || ''} ${order._id}`.toLowerCase().includes(search.toLowerCase())), [orders, orderStatus, dateFrom, dateTo, search]);
+  const visibleStudents = useMemo(() => students.filter((student) => `${student.name} ${student.email}`.toLowerCase().includes(search.toLowerCase())), [students, search]);
+  const activeRows = section === 'courses' ? visibleCourses : section === 'orders' ? visibleOrders : visibleStudents;
+  const pageCount = Math.max(1, Math.ceil(activeRows.length / pageSize));
+  const pageRows = activeRows.slice((page - 1) * pageSize, page * pageSize);
+  useEffect(() => { setPage(1); }, [section, search, courseStatus, orderStatus, dateFrom, dateTo]);
 
-        setCourses(fetchedCourses);
-        setOrders(fetchedOrders);
-
-        const completedOrders = fetchedOrders.filter((o) => o.status === 'completed');
-        const totalRevenue = completedOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
-        const uniqueStudents = new Set(fetchedOrders.map((o) => o.student?._id).filter(Boolean)).size;
-
-        setStats({
-          totalCourses: fetchedCourses.length,
-          totalRevenue,
-          totalOrders: ordersRes.data.total || fetchedOrders.length,
-          activeStudents: uniqueStudents,
-        });
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load admin data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (auth.user?.role === 'admin') {
-      fetchAdminData();
-    }
-  }, [auth.user?.role]);
-
-  const revenueData = useMemo(() => {
-    const completedOrders = orders.filter((o) => o.status === 'completed');
-    const monthlyRevenue = completedOrders.reduce((acc, order) => {
-      const month = formatMonth(order.createdAt);
-      acc[month] = (acc[month] || 0) + (order.amount || 0);
-      return acc;
-    }, {});
-
-    return Object.entries(monthlyRevenue).map(([name, revenue]) => ({ name, revenue }));
-  }, [orders]);
-
-  const orderStatusData = useMemo(
-    () => [
-      { name: 'Completed', value: orders.filter((o) => o.status === 'completed').length },
-      { name: 'Pending', value: orders.filter((o) => o.status === 'pending').length },
-      { name: 'Failed', value: orders.filter((o) => o.status === 'failed').length },
-    ],
-    [orders]
-  );
-
-
-  const handleDeleteCourse = async (courseId) => {
-    try {
-      await courseAPI.deleteCourse(courseId);
-      setCourses((prev) => prev.filter((course) => course._id !== courseId));
-      setStats((prev) => ({ ...prev, totalCourses: Math.max(0, prev.totalCourses - 1) }));
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete course');
-    }
+  const toggleCourse = async (course) => {
+    const action = course.isPublished ? 'unpublish' : 'publish';
+    if (!window.confirm(`${action === 'publish' ? 'Publish' : 'Unpublish'} “${course.title}”?`)) return;
+    setBusyId(course._id); setError('');
+    try { await courseAPI.updateCourse(course._id, { isPublished: !course.isPublished }); await load(); }
+    catch (err) { setError(err.response?.data?.issues?.join(' · ') || err.response?.data?.message || 'Could not update course.'); }
+    finally { setBusyId(''); }
+  };
+  const deleteCourse = async (course) => {
+    if (!window.confirm(`Delete “${course.title}”? This removes its course content and cannot be undone.`)) return;
+    setBusyId(course._id); setError('');
+    try { await courseAPI.deleteCourse(course._id); await load(); }
+    catch (err) { setError(err.response?.data?.message || 'Could not delete course.'); }
+    finally { setBusyId(''); }
+  };
+  const exportOrders = () => {
+    const header = ['Order ID', 'Student', 'Email', 'Course', 'Amount', 'Currency', 'Status', 'Created'];
+    const quote = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const rows = visibleOrders.map((order) => [order._id, order.student?.name, order.student?.email, order.courseTitle || order.course?.title, order.amount, order.currency, order.status, order.createdAt]);
+    const url = URL.createObjectURL(new Blob([[header, ...rows].map((row) => row.map(quote).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'coursehub-orders.csv'; anchor.click(); URL.revokeObjectURL(url);
   };
 
-  const togglePublishStatus = async (courseId, nextStatus) => {
-    try {
-      const { data } = await courseAPI.updateCourse(courseId, { isPublished: nextStatus });
-      setCourses((prev) => prev.map((course) => (
-        course._id === courseId ? { ...course, isPublished: data.course.isPublished } : course
-      )));
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update publish status');
-    }
-  };
+  const title = { overview: 'Overview', courses: 'Courses', orders: 'Orders', students: 'Students' }[section];
+  const metricItems = [
+    { key: 'revenue', label: 'Revenue', icon: CircleDollarSign, format: (value) => formatMoney(value) },
+    { key: 'orders', label: 'Orders', icon: ShoppingBag, format: (value) => Number(value || 0).toLocaleString() },
+    { key: 'students', label: 'Students', icon: GraduationCap, format: (value) => Number(value || 0).toLocaleString() },
+    { key: 'courses', label: 'Courses', icon: BookOpen, format: (value) => Number(value || 0).toLocaleString() },
+  ];
+  const statusCounts = data?.statusCounts || [];
+  const totalStatuses = statusCounts.reduce((sum, item) => sum + item.value, 0);
 
-  if (auth.user?.role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-light flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-gray-500 text-lg">Access denied. Admin only.</p>
-        </div>
+  return <Reveal className="mx-auto max-w-[1440px]">
+    {error && <div role="alert" className="mb-5 flex items-start justify-between gap-3 rounded-md border border-[var(--color-danger-soft)] bg-[var(--color-danger-soft)] px-4 py-3 text-sm text-[var(--color-danger)]"><span>{error}</span><button onClick={() => setError('')} aria-label="Dismiss error">×</button></div>}
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><h1 className="font-serif text-[30px] font-medium leading-tight tracking-tight">{title}</h1><p className="mt-1 text-sm text-slate-500">{section === 'overview' ? 'A clear view of your courses, learners and payments.' : `Manage your ${section} and keep everything in order.`}</p></div>{section === 'overview' && <Link to="/admin/create-course" className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"><Plus size={16} />Create course</Link>}</div>
+
+    {section === 'overview' && <>
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{metricItems.map((item) => { const metric = data?.metrics?.[item.key]; const Icon = item.icon; const delta = metric?.change || 0; return <article key={item.key} className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-line)] bg-white p-5">{loading ? <><Skeleton className="h-3 w-24" /><Skeleton className="mt-4 h-8 w-28" /><Skeleton className="mt-3 h-3 w-36" /></> : <><Icon size={19} className="absolute right-5 top-5 text-[var(--color-line-strong)]" strokeWidth={1.5} /><span className="text-xs font-medium text-slate-500">{item.label}</span><p className="mt-3 font-serif text-[30px] font-medium leading-9 tracking-tight"><CountUp value={metric?.value} format={item.format} duration={motionTokens.durations.slow} /></p><p className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-slate-500"><span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 ${delta > 0 ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]' : delta < 0 ? 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]' : 'bg-[#F1F0ED] text-[var(--color-muted)]'}`}>{delta > 0 ? <ArrowUpRight size={12} /> : delta < 0 ? <ArrowDownRight size={12} /> : null}{Math.abs(delta)}%</span><span>vs previous period</span></p></>}</article>; })}</div>
+      <div className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+        <section className="rounded-[var(--radius-lg)] border border-[var(--color-line)] bg-white p-5 sm:p-6"><div className="mb-5"><h2 className="font-sans text-lg font-semibold">Revenue over time</h2><p className="mt-1 text-xs text-slate-500">Completed orders · {range === '12m' ? 'monthly' : 'daily'} totals</p></div>{loading ? <Skeleton className="h-[280px] w-full" /> : <div className="h-[280px] w-full">{data?.chart?.length ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={data.chart} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}><defs><linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={ACCENT} stopOpacity={0.14} /><stop offset="100%" stopColor={ACCENT} stopOpacity={0.01} /></linearGradient></defs><CartesianGrid vertical={false} stroke="var(--color-line)" strokeDasharray="3 4" /><XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: 'var(--color-subtle)', fontSize: 11 }} interval={range === '7d' ? 0 : 'preserveStartEnd'} minTickGap={20} /><YAxis tickLine={false} axisLine={false} width={54} tick={{ fill: 'var(--color-subtle)', fontSize: 11 }} tickFormatter={(value) => value >= 1000 ? `$${(value / 1000).toFixed(0)}k` : `$${value}`} /><Tooltip formatter={(value) => [formatMoney(value), 'Revenue']} labelStyle={{ color: 'var(--color-ink)', fontWeight: 600 }} contentStyle={{ border: '1px solid var(--color-line)', borderRadius: 12, background: 'var(--color-surface)', boxShadow: '0 8px 24px rgb(20 20 20 / 8%)', padding: '10px 12px' }} /><Area type="monotone" dataKey="revenue" stroke={ACCENT} strokeWidth={2} fill="url(#revenueFill)" activeDot={{ r: 4, fill: ACCENT, strokeWidth: 0 }} isAnimationActive={!chartAnimated.current.revenue} onAnimationEnd={() => { chartAnimated.current.revenue = true; }} /></AreaChart></ResponsiveContainer> : <EmptyState title="No revenue in this period" description="Completed purchases will appear here as learners enroll." />}</div>}</section>
+        <section className="rounded-[var(--radius-lg)] border border-[var(--color-line)] bg-white p-5 sm:p-6"><div><h2 className="font-sans text-lg font-semibold">Order status</h2><p className="mt-1 text-xs text-slate-500">Orders in the selected period</p></div>{loading ? <Skeleton className="mt-5 h-48 w-full" /> : totalStatuses ? <div className="mt-5 flex flex-col items-center gap-5 sm:flex-row xl:flex-col 2xl:flex-row"><div className="relative h-40 w-40 shrink-0"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={statusCounts} dataKey="value" nameKey="name" innerRadius={54} outerRadius={70} paddingAngle={2} stroke="none" isAnimationActive={!chartAnimated.current.status} onAnimationEnd={() => { chartAnimated.current.status = true; }}>{statusCounts.map((item) => <Cell key={item.name} fill={STATUS_COLORS[item.name]} />)}</Pie><Tooltip contentStyle={{ border: '1px solid var(--color-line)', borderRadius: 10 }} /></PieChart></ResponsiveContainer><div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><span className="font-serif text-2xl">{totalStatuses}</span><span className="text-xs text-slate-500">orders</span></div></div><div className="w-full space-y-3">{statusCounts.map((item) => <div key={item.name} className="flex items-center gap-2 text-xs capitalize text-slate-600"><i className="h-2 w-2 shrink-0 rounded-full" style={{ background: STATUS_COLORS[item.name] }} />{item.name}<span className="ml-auto text-slate-500">{Math.round(item.value / totalStatuses * 100)}%</span><span className="w-7 text-right font-medium text-[var(--color-ink)]">{item.value}</span></div>)}</div></div> : <EmptyState title="No orders in this period" description="Orders in the selected period will appear here." />}</section>
       </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader className="w-8 h-8 animate-spin text-primary" />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,1fr)]">
+        <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-line)] bg-white"><div className="flex items-center justify-between border-b border-[var(--color-line)] px-5 py-4"><div><h2 className="font-sans text-lg font-semibold">Recent orders</h2><p className="mt-1 text-xs text-slate-500">Orders from the selected period</p></div><Link to="/admin/dashboard/orders" className="text-sm font-medium text-[var(--color-accent)]">All orders →</Link></div>{loading ? <div className="space-y-3 p-5">{[1, 2, 3, 4, 5].map((n) => <Skeleton key={n} className="h-10 w-full" />)}</div> : periodOrders.length ? <div className="overflow-x-auto"><table className="w-full min-w-[540px] text-left text-sm"><thead className="sticky top-0 bg-white text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3 font-medium">Student / course</th><th className="px-5 py-3 text-right font-medium">Amount</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 font-medium">Date</th></tr></thead><tbody>{periodOrders.slice(0, 5).map((order) => <tr key={order._id} className="border-t border-[var(--color-line)] transition-colors hover:bg-[var(--color-paper)]"><td className="px-5 py-3"><p className="font-medium">{order.student?.name || 'Unknown student'}</p><p className="mt-0.5 text-xs text-slate-500">{order.courseTitle || order.course?.title || 'Course title unavailable'}</p></td><td className="px-5 py-3 text-right tabular-nums">{formatMoney(order.amount, order.currency)}</td><td className="px-5 py-3"><StatusPill status={order.status} /></td><td className="px-5 py-3 text-xs text-slate-500">{formatDate(order.createdAt)}</td></tr>)}</tbody></table></div> : <EmptyState title="No orders in this period" description="New course orders will appear here." />}</section>
+        <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-line)] bg-white"><div className="flex items-center justify-between border-b border-[var(--color-line)] px-5 py-4"><div><h2 className="font-sans text-lg font-semibold">Top courses</h2><p className="mt-1 text-xs text-slate-500">Ranked by completed order revenue</p></div><Link to="/admin/dashboard/courses" className="text-sm font-medium text-[var(--color-accent)]">All courses →</Link></div>{loading ? <div className="space-y-4 p-5">{[1, 2, 3, 4, 5].map((n) => <Skeleton key={n} className="h-10 w-full" />)}</div> : courses.length ? <div className="divide-y divide-[var(--color-line)]">{[...courses].sort((a, b) => b.revenue - a.revenue).slice(0, 5).map((course, index) => <div key={course._id} className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-[var(--color-paper)]"><span className="font-serif text-lg text-slate-400">0{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{course.title}</p><p className="mt-1 text-xs text-slate-500">{course.enrollmentCount || 0} enrollments</p></div><span className="shrink-0 text-sm tabular-nums">{formatMoney(course.revenue)}</span></div>)}</div> : <EmptyState title="No courses yet" description="Create a course to start your catalog." action={<Link to="/admin/create-course" className="mt-3 inline-flex text-sm font-medium text-[var(--color-accent)]">Create course</Link>} />}</section>
       </div>
-    );
-  }
+    </>}
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-gradient-to-r from-primary to-secondary text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-end justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-semibold mb-2">Admin Dashboard</h1>
-            <p className="text-blue-100">Manage courses, orders, and track analytics</p>
-          </div>
-          <Link to="/admin/create-course" className="inline-flex items-center gap-2 px-5 py-3 bg-white/95 text-primary font-semibold rounded-xl hover:bg-white transition">
-            <PlusCircle className="w-5 h-5" /> Create Course
-          </Link>
-        </div>
+    {section !== 'overview' && <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-line)] bg-white">
+      <div className="flex flex-wrap items-center gap-3 border-b border-[var(--color-line)] p-4 sm:p-5"><label className="flex min-w-[200px] flex-1 items-center gap-2 rounded-md border border-[var(--color-line)] px-3 py-2"><Search size={16} className="text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${section}…`} className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" /></label>
+        {section === 'courses' && <select aria-label="Filter courses by status" value={courseStatus} onChange={(event) => setCourseStatus(event.target.value)} className="rounded-md border border-[var(--color-line)] bg-white px-3 py-2 text-sm"><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option></select>}
+        {section === 'orders' && <><select aria-label="Filter orders by status" value={orderStatus} onChange={(event) => setOrderStatus(event.target.value)} className="rounded-md border border-[var(--color-line)] bg-white px-3 py-2 text-sm"><option value="all">All statuses</option>{['completed', 'pending', 'failed', 'refunded'].map((status) => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select><label className="text-xs text-slate-500">From <input type="date" aria-label="Orders from date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="ml-1 rounded-md border border-[var(--color-line)] px-2 py-2 text-sm text-[var(--color-ink)]" /></label><label className="text-xs text-slate-500">To <input type="date" aria-label="Orders to date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="ml-1 rounded-md border border-[var(--color-line)] px-2 py-2 text-sm text-[var(--color-ink)]" /></label><button type="button" onClick={exportOrders} className="inline-flex items-center gap-2 rounded-md border border-[var(--color-line)] px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-paper)]"><Download size={15} />Export CSV</button></>}
+        {section === 'courses' && <Link to="/admin/create-course" className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"><Plus size={15} />Create course</Link>}
+        <span className="w-full text-xs text-slate-500 sm:ml-auto sm:w-auto">{activeRows.length} results</span>
       </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">{error}</div>}
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {[{
-            label: 'Total Courses', value: stats.totalCourses, icon: BookOpen,
-          }, {
-            label: 'Total Revenue', value: `$${stats.totalRevenue.toFixed(2)}`, icon: DollarSign,
-          }, {
-            label: 'Total Orders', value: stats.totalOrders, icon: TrendingUp,
-          }, {
-            label: 'Active Students', value: stats.activeStudents, icon: Users,
-          }].map((item) => (
-            <div key={item.label} className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 hover:shadow-md transition">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">{item.label}</p>
-                  <p className="text-3xl font-bold text-dark mt-1">{item.value}</p>
-                </div>
-                <item.icon className="w-10 h-10 text-primary opacity-30" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
-            <h3 className="text-lg font-bold text-dark mb-4">Revenue Trend (from real orders)</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
-            <h3 className="text-lg font-bold text-dark mb-4">Order Status</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={orderStatusData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-slate-100">
-          <h3 className="text-lg font-bold text-dark mb-6">Your Courses</h3>
-          {courses.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No courses yet</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-4 px-4 font-semibold text-dark">Course Title</th>
-                    <th className="text-left py-4 px-4 font-semibold text-dark">Students</th>
-                    <th className="text-left py-4 px-4 font-semibold text-dark">Modules</th>
-                    <th className="text-left py-4 px-4 font-semibold text-dark">Price</th>
-                    <th className="text-left py-4 px-4 font-semibold text-dark">Status</th>
-                    <th className="text-left py-4 px-4 font-semibold text-dark">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {courses.map((course) => (
-                    <tr key={course._id} className="border-b border-gray-100 hover:bg-light transition">
-                      <td className="py-4 px-4 text-dark font-semibold">{course.title}</td>
-                      <td className="py-4 px-4 text-gray-600">{course.enrollmentCount || 0}</td>
-                      <td className="py-4 px-4 text-gray-600">{course.modules?.length || 0}</td>
-                      <td className="py-4 px-4 text-dark font-semibold">${course.price}</td>
-                      <td className="py-4 px-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${course.isPublished ? 'bg-green-100 text-accent' : 'bg-yellow-100 text-orange-600'}`}>
-                          {course.isPublished ? 'Published' : 'Draft'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => togglePublishStatus(course._id, !course.isPublished)}
-                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${course.isPublished ? 'border-orange-300 text-orange-700 hover:bg-orange-50' : 'border-green-300 text-green-700 hover:bg-green-50'}`}
-                          >
-                            {course.isPublished ? 'Move to Draft' : 'Publish'}
-                          </button>
-                          <Link
-                            to={`/admin/edit-course/${course._id}`}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50"
-                          >
-                            Edit
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCourse(course._id)}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-300 text-red-700 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default AdminDashboard;
+      {loading ? <div className="space-y-3 p-5">{[1, 2, 3, 4, 5, 6].map((n) => <Skeleton key={n} className="h-[52px] w-full" />)}</div> : section === 'courses' ? visibleCourses.length ? <div className="overflow-x-auto"><table className="w-full min-w-[780px] text-left text-sm"><thead className="sticky top-0 z-10 bg-white text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3 font-medium">Course</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 text-right font-medium">Enrollments</th><th className="px-5 py-3 text-right font-medium">Revenue</th><th className="px-5 py-3 text-right font-medium">Price</th><th className="px-5 py-3 text-right font-medium">Actions</th></tr></thead><tbody>{pageRows.map((course) => <tr key={course._id} className="h-[52px] border-t border-[var(--color-line)] transition-colors hover:bg-[var(--color-paper)]"><td className="px-5 py-2"><span className="font-medium">{course.title}</span><span className="mt-0.5 block text-xs text-slate-500">Added {formatDate(course.createdAt)}</span></td><td className="px-5 py-2"><StatusPill status={course.isPublished ? 'published' : 'draft'} /></td><td className="px-5 py-2 text-right tabular-nums text-slate-600">{course.enrollmentCount || 0}</td><td className="px-5 py-2 text-right tabular-nums text-slate-600">{formatMoney(course.revenue)}</td><td className="px-5 py-2 text-right tabular-nums text-slate-600">{formatMoney(course.price)}</td><td className="px-5 py-2 text-right"><details className="relative inline-block text-left"><summary aria-label={`Actions for ${course.title}`} className="inline-flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-[var(--color-paper)]"><MoreHorizontal size={18} /></summary><div className="absolute right-0 z-20 mt-1 w-36 rounded-md border border-[var(--color-line)] bg-white p-1"><Link to={`/admin/edit-course/${course._id}`} className="block rounded px-3 py-2 text-left text-xs hover:bg-[var(--color-paper)]">Edit</Link><button disabled={busyId === course._id} onClick={() => toggleCourse(course)} className="block w-full rounded px-3 py-2 text-left text-xs hover:bg-[var(--color-paper)] disabled:opacity-50">{busyId === course._id ? 'Saving…' : course.isPublished ? 'Unpublish' : 'Publish'}</button><button disabled={busyId === course._id} onClick={() => deleteCourse(course)} className="block w-full rounded px-3 py-2 text-left text-xs text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)] disabled:opacity-50">Delete</button></div></details></td></tr>)}</tbody></table></div> : <EmptyState title="No courses match" description="Try a different search or status filter." /> : section === 'orders' ? visibleOrders.length ? <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left text-sm"><thead className="sticky top-0 z-10 bg-white text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3 font-medium">Order</th><th className="px-5 py-3 font-medium">Student</th><th className="px-5 py-3 font-medium">Course</th><th className="px-5 py-3 text-right font-medium">Amount</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 font-medium">Date</th></tr></thead><tbody>{pageRows.map((order) => <tr key={order._id} className="h-[52px] border-t border-[var(--color-line)] transition-colors hover:bg-[var(--color-paper)]"><td className="px-5 py-2 font-mono text-xs text-slate-500">{order._id.slice(-8).toUpperCase()}</td><td className="px-5 py-2"><span className="font-medium">{order.student?.name || 'Unknown student'}</span><span className="mt-0.5 block text-xs text-slate-500">{order.student?.email || '—'}</span></td><td className="px-5 py-2 text-slate-600">{order.courseTitle || order.course?.title || 'Course title unavailable'}</td><td className="px-5 py-2 text-right font-medium tabular-nums">{formatMoney(order.amount, order.currency)}</td><td className="px-5 py-2"><StatusPill status={order.status} /></td><td className="px-5 py-2 text-xs text-slate-600">{formatDate(order.createdAt)}</td></tr>)}</tbody></table></div> : <EmptyState title="No matching orders" description="Orders will appear here when learners enroll. Adjust your filters or search." /> : visibleStudents.length ? <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="sticky top-0 z-10 bg-white text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3 font-medium">Student</th><th className="px-5 py-3 text-right font-medium">Enrolled courses</th><th className="px-5 py-3 font-medium">Average progress</th><th className="px-5 py-3 font-medium">Joined</th></tr></thead><tbody>{pageRows.map((student) => <tr key={student._id} className="h-[52px] border-t border-[var(--color-line)] transition-colors hover:bg-[var(--color-paper)]"><td className="px-5 py-2"><span className="font-medium">{student.name}</span><span className="mt-0.5 block text-xs text-slate-500">{student.email}</span></td><td className="px-5 py-2 text-right tabular-nums text-slate-600">{student.enrolledCourses}</td><td className="px-5 py-2"><div className="flex items-center gap-3"><div className="h-1.5 w-24 overflow-hidden rounded-full bg-[var(--color-line)]"><div className="h-full rounded-full bg-[var(--color-accent)]" style={{ width: `${student.averageProgress}%` }} /></div><span className="text-xs tabular-nums text-slate-600">{student.averageProgress}%</span></div></td><td className="px-5 py-2 text-slate-600">{formatDate(student.joinedAt)}</td></tr>)}</tbody></table></div> : <EmptyState title="No students match" description="Students will appear here after they create an account." />}
+      {!loading && activeRows.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-line)] px-5 py-3 text-xs text-slate-500"><span>Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, activeRows.length)} of {activeRows.length}</span><div className="flex items-center gap-2"><button disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="rounded-md border border-[var(--color-line)] px-3 py-1.5 transition-colors hover:bg-[var(--color-paper)] disabled:cursor-not-allowed disabled:opacity-40">Previous</button><span>{page} / {pageCount}</span><button disabled={page >= pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))} className="rounded-md border border-[var(--color-line)] px-3 py-1.5 transition-colors hover:bg-[var(--color-paper)] disabled:cursor-not-allowed disabled:opacity-40">Next</button></div></div>}
+    </section>}
+  </Reveal>;
+}
