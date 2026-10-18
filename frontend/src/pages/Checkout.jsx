@@ -40,12 +40,14 @@ export default function Checkout() {
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const processingRef = useRef(false);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const enrollmentRedirected = useRef(false);
 
   useEffect(() => {
     let active = true;
+    enrollmentRedirected.current = false;
     setLoading(true);
     setError('');
     setNotFound(false);
@@ -88,7 +90,8 @@ export default function Checkout() {
 
   const submitCheckout = useCallback(async (event) => {
     event?.preventDefault?.();
-    if (!course || processing) return;
+    if (!course || processingRef.current) return;
+    processingRef.current = true;
     setProcessing(true);
     setError('');
     try {
@@ -102,9 +105,10 @@ export default function Checkout() {
       window.location.assign(sessionRes.data.url);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'We could not start checkout. Please try again.');
+      processingRef.current = false;
       setProcessing(false);
     }
-  }, [course, courseId, isFree, navigate, processing]);
+  }, [course, courseId, isFree, navigate]);
 
   const handleLogout = async () => {
     try { await authAPI.logout(); } catch { /* Locally clear the session even if the network request fails. */ }
@@ -118,16 +122,15 @@ export default function Checkout() {
   if (!course) return <CheckoutSkeleton />;
 
   const summary = <section className={`checkout-panel checkout-summary ${mobileSummaryOpen ? 'is-expanded' : ''}`} aria-labelledby="checkout-summary-title">
-    <button type="button" className="checkout-summary-toggle" aria-expanded={mobileSummaryOpen} onClick={() => setMobileSummaryOpen((open) => !open)}><span>Show order details</span><ChevronDown size={17} /></button>
+    <button type="button" className="checkout-summary-toggle" aria-expanded={mobileSummaryOpen} onClick={() => setMobileSummaryOpen((open) => !open)}><span>{mobileSummaryOpen ? 'Hide order details' : 'Show order details'}</span><ChevronDown size={17} /></button>
     <div className="checkout-summary-content">
       <h2 id="checkout-summary-title" className="checkout-panel-title">Order summary</h2>
       <div className="checkout-course-summary"><img src={course.thumbnail || '/placeholder-course.png'} alt={`${course.title} course thumbnail`} /><div><h3>{course.title}</h3><span className="checkout-level">{course.level || 'Course'}</span><p>{lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}{duration ? ` · ${duration}` : ''}</p></div></div>
       <dl className="checkout-price-rows"><div><dt>Price</dt><dd>{formatMoney(price, currency)}</dd></div></dl>
       <div className="checkout-summary-total"><span>Total</span><strong><CountUp value={Math.round(price * 100)} format={(cents) => formatMoney(cents / 100, currency)} duration={reduced ? 0.01 : 0.5} /></strong></div>
       <button className="checkout-pay-button" type="button" onClick={submitCheckout} disabled={processing} aria-busy={processing}>
-        {processing ? <><Loader2 className="checkout-spinner" size={18} aria-hidden="true" /><span className="sr-only">Starting checkout</span></> : <>{isFree ? 'Enroll for free' : <>Continue to secure payment <span> - {formatMoney(price, currency)}</span></>}<Lock size={17} aria-hidden="true" />{!isFree && <span className="sr-only">Stripe secure checkout</span>}</>}
+        {processing ? <><Loader2 className="checkout-spinner" size={18} aria-hidden="true" /><span className="sr-only">Starting checkout</span></> : <>{isFree ? 'Enroll for free' : <>Continue to secure payment <span> - {formatMoney(price, currency)}</span></>}{!isFree && <><Lock size={17} aria-hidden="true" /><span className="sr-only">Stripe secure checkout</span></>}</>}
       </button>
-      {error && <div className="checkout-error" role="alert"><p>{error}</p><button type="button" onClick={submitCheckout} disabled={processing}>Retry</button></div>}
       {isFree ? <p className="checkout-summary-note">Enroll at no cost and start learning right away.</p> : <p className="checkout-summary-note"><Lock size={13} /> Payment is completed securely on Stripe.</p>}
     </div>
   </section>;
@@ -150,6 +153,7 @@ export default function Checkout() {
         {summary}
       </m.aside>
     </div>
-    <div className="checkout-mobile-bar"><div><span>Total</span><strong>{formatMoney(price, currency)}</strong></div><button type="button" onClick={submitCheckout} disabled={processing} aria-busy={processing}>{processing ? <Loader2 className="checkout-spinner" size={19} /> : <>{isFree ? 'Enroll for free' : 'Continue'} <Lock size={15} /></>}</button></div>
+    {error && <div className="checkout-error checkout-page-error" role="alert"><p>{error}</p><button type="button" onClick={submitCheckout} disabled={processing}>Retry</button></div>}
+    <div className="checkout-mobile-bar"><div><span>Total</span><strong>{formatMoney(price, currency)}</strong></div><button type="button" onClick={submitCheckout} disabled={processing} aria-busy={processing}>{processing ? <Loader2 className="checkout-spinner" size={19} /> : <>{isFree ? 'Enroll for free' : 'Continue'} {!isFree && <Lock size={15} />}</>}</button></div>
   </main>;
 }

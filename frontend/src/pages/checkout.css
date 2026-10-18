@@ -57,6 +57,7 @@
 .checkout-error { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .8rem; padding: .65rem .75rem; color: var(--color-danger); background: var(--color-danger-soft); border: 1px solid color-mix(in srgb, var(--color-danger) 18%, var(--color-line)); border-radius: var(--radius-sm); font-size: .78rem; }
 .checkout-error p { margin: 0; }
 .checkout-error button { min-height: 38px; padding: .3rem .55rem; color: var(--color-danger); background: transparent; border: 1px solid currentColor; border-radius: 6px; font: 600 .76rem var(--font-body); cursor: pointer; }
+.checkout-page-error { max-width: 760px; margin-top: 1rem; }
 .checkout-cancel-banner { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin-bottom: 1.25rem; padding: .85rem 1rem; color: #634916; background: #F5EFE2; border: 1px solid #E9DDC3; border-radius: var(--radius-sm); font-size: .88rem; }
 .checkout-cancel-banner button { width: 36px; height: 36px; flex: 0 0 36px; color: inherit; background: transparent; border: 0; border-radius: 6px; font-size: 1.25rem; cursor: pointer; }
 .checkout-mobile-bar { display: none; }

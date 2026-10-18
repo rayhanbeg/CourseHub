@@ -7,7 +7,10 @@ export default function CheckoutCancel() {
   const [returning, setReturning] = useState(false);
   useEffect(() => {
     let courseId = '';
-    try { courseId = sessionStorage.getItem('coursehub_checkout_course') || ''; } catch { /* Session storage is optional. */ }
+    try {
+      courseId = sessionStorage.getItem('coursehub_checkout_course') || '';
+      if (courseId) sessionStorage.removeItem('coursehub_checkout_course');
+    } catch { /* Session storage is optional. */ }
     if (courseId) {
       setReturning(true);
       navigate(`/checkout/${encodeURIComponent(courseId)}?cancelled=1`, { replace: true });
